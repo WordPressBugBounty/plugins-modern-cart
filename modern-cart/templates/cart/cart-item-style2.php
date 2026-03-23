@@ -111,9 +111,9 @@ $allow_quantity_kses = [
 ];
 ?>
 
-<div class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?> moderncart-cart-item-<?php echo esc_attr( $cart_item_key ); ?>" data-key="<?php echo esc_attr( $cart_item_key ); ?>"  role="row">
+<div class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?> moderncart-cart-item-<?php echo esc_attr( $cart_item_key ); ?>" data-key="<?php echo esc_attr( $cart_item_key ); ?>" role="listitem">
 
-	<div class="moderncart-cart-item-container" role="cell">
+	<div class="moderncart-cart-item-container">
 
 			<div class="moderncart-cart-item-image">
 				<?php if ( $product_permalink ) : ?>
@@ -151,7 +151,7 @@ $allow_quantity_kses = [
 	<div class="moderncart-cart-item-actions">
 		<?php if ( $delete ) : ?>
 			<button aria-label="<?php esc_attr_e( 'Remove Item From Cart', 'modern-cart' ); ?>" class="moderncart-cart-item-actions-remove" data-key="<?php echo esc_attr( $cart_item_key ); ?>">
-				<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-labelledby="closeIconTitle" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" color="#000">
+				<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" color="#000">
 					<path d="m6.343 6.343 11.314 11.314m-11.314 0L17.657 6.343"/>
 				</svg>
 			</button>

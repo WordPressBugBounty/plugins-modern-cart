@@ -51,6 +51,7 @@ if ( $has_error_notice ) {
 		</div>
 		<?php
 		if ( $has_error_notice ) {
+			echo '<div role="alert" aria-live="assertive">';
 			echo wp_kses(
 				$data_args['notice'],
 				[
@@ -60,6 +61,7 @@ if ( $has_error_notice ) {
 					],
 				]
 			);
+			echo '</div>';
 		}
 		?>
 	</form>

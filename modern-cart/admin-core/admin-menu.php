@@ -267,6 +267,10 @@ class Admin_Menu {
 		$default_data = $this->helper->get_option( $key );
 		$data         = wp_parse_args( $data, $default_data );
 
+		if ( MODERNCART_SETTINGS === $key && isset( $data['enable_usage_tracking'] ) ) {
+			update_option( 'mcw_usage_optin', true === $data['enable_usage_tracking'] ? 'yes' : 'no' );
+		}
+
 		return update_option( $key, $data );
 	}
 
@@ -347,7 +351,22 @@ class Admin_Menu {
 		}
 
 		// Fetch the RSS feed from the URL. This saves us from the CORS issue.
-		echo wp_remote_retrieve_body( wp_remote_get( 'https://cartflows.com/product/modern-cart/feed/' ) ); // phpcs:ignore -- This is a valid use case cannot use VIP rules here.
+		$response = wp_remote_get( 'https://cartflows.com/product/modern-cart/feed/' ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get -- Not a VIP environment; wp_remote_get is appropriate here.
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( [ 'message' => esc_html__( 'Failed to fetch RSS feed.', 'modern-cart' ) ] );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+
+		// Output the raw RSS/XML body with the correct Content-Type header.
+		// wp_kses() must NOT be used here: it is an HTML sanitizer that strips XML CDATA sections,
+		// namespaced tags (content:encoded, dc:creator, atom:link), pubDate elements, and the XML
+		// declaration — all of which are required by the whats-new-rss JS library for parsing.
+		// The feed is fetched from cartflows.com (trusted first-party URL) and is only accessible
+		// to users with the manage_options capability, so no further sanitization is needed.
+		header( 'Content-Type: application/rss+xml; charset=UTF-8' );
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Proxying RSS/XML from trusted first-party URL (cartflows.com); restricted to manage_options users.
 		exit;
 	}
 
@@ -402,7 +421,10 @@ class Admin_Menu {
 				}
 
 				if ( 3 === $index && (bool) $value ) {
-					$installable_plugin_slugs[] = $key; // Here key is plugin slug.
+					$allowed_slugs = array_keys( $this->get_onboarding_defaults()[3] ?? [] );
+					if ( in_array( $key, $allowed_slugs, true ) ) {
+						$installable_plugin_slugs[] = $key;
+					}
 				}
 			}
 		}

@@ -79,6 +79,10 @@ class Helper {
 					'value' => 'accordian',
 					'type'  => 'string',
 				],
+				'enable_usage_tracking'           => [
+					'value' => false,
+					'type'  => 'boolean',
+				],
 				'main_title'                      => [
 					'value' => __( 'Review Your Cart', 'modern-cart' ),
 					'type'  => 'string',
@@ -175,7 +179,7 @@ class Helper {
 				$_defaults[ $key ] = [];
 
 				foreach ( $value as $_key => $_value ) {
-					$_defaults[ $key ][ $_key ] = $_value['value'];
+					$_defaults[ $key ][ $_key ] = is_array( $_value ) ? $_value['value'] : $_value;
 				}
 			}
 		}
@@ -679,7 +683,7 @@ class Helper {
 			if ( get_option( 'woocommerce_private_link' ) === 'yes' ) {
 				// Allow access if valid share key cookie is present.
 				// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Required for WooCommerce Coming Soon private link functionality
-				if ( isset( $_COOKIE['woo-share'] ) && get_option( 'woocommerce_share_key' ) === $_COOKIE['woo-share'] ) {
+				if ( isset( $_COOKIE['woo-share'] ) && get_option( 'woocommerce_share_key' ) === sanitize_text_field( wp_unslash( $_COOKIE['woo-share'] ) ) ) {
 					return false;
 				}
 			}

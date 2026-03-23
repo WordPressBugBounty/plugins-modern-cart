@@ -38,7 +38,7 @@ class Floating_Ajax extends Floating {
 	public function refresh_floating_cart(): void {
 		Helper::set_nocache_headers();
 		if ( ! isset( $_POST['moderncart_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['moderncart_nonce'] ) ), 'moderncart_ajax_nonce' ) ) {
-			return;
+			wp_send_json_error( [ 'message' => esc_html__( 'Nonce verification failed.', 'modern-cart' ) ], 403 );
 		}
 
 		if ( 'disabled' === $this->get_option( 'floating_cart_position', MODERNCART_FLOATING_SETTINGS, 'bottom-left' ) ) {

@@ -15,27 +15,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<div class="moderncart-order-summary-items">
 		<div class="moderncart-order-summary-item">
-			<span>Shipping Fee</span>
-			<span>Free</span>
+			<span><?php esc_html_e( 'Shipping Fee', 'modern-cart' ); ?></span>
+			<span><?php esc_html_e( 'Free', 'modern-cart' ); ?></span>
 		</div>
 
 		<div class="moderncart-order-summary-item">
-			<span>Est. Tax & Fees</span>
+			<span><?php esc_html_e( 'Est. Tax & Fees', 'modern-cart' ); ?></span>
 			<span>-</span>
 		</div>
 
 		<div class="moderncart-order-summary-item">
-			<span>Subtotal</span>
+			<span><?php esc_html_e( 'Subtotal', 'modern-cart' ); ?></span>
 			<span>Rs 55.00</span>
 		</div>
 
 		<div class="moderncart-order-summary-item">
-			<span>Savings</span>
+			<span><?php esc_html_e( 'Savings', 'modern-cart' ); ?></span>
 			<span>Rs 2.00</span>
 		</div>
 
 		<div class="moderncart-apply-coupon-container">
-			<a href="javascript:void(0)">Apply Coupon Code</a>
+			<button type="button" class="moderncart-have-coupon-code-area-trigger"><?php esc_html_e( 'Apply Coupon Code', 'modern-cart' ); ?></button>
 		</div>
 	</div>
 

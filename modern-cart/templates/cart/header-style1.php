@@ -63,7 +63,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="moderncart-slide-out-header-title">
 			<span><?php echo esc_html( $title ); ?></span>
 		</div>
-		<div class="moderncart-slide-out-header-quantity" aria-live="polite" aria-atomic="true">
+		<div class="moderncart-slide-out-header-quantity" aria-live="polite" aria-atomic="true" aria-label="
+		<?php
+			/* translators: %d: number of items in cart */
+			printf( esc_attr__( '%d items in cart', 'modern-cart' ), intval( $quantity ) );
+		?>
+		">
 			<span><?php echo intval( $quantity ); ?></span>
 		</div>
 	</div>

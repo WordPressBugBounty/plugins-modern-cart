@@ -9,10 +9,12 @@
 namespace ModernCart;
 
 use ModernCart\Admin_Core\Admin_Menu;
+use ModernCart\Inc\Abilities\Register_Abilities;
 use ModernCart\Inc\Floating;
 use ModernCart\Inc\Floating_Ajax;
 use ModernCart\Inc\Helper;
 use ModernCart\Inc\Scripts;
+use ModernCart\Inc\Order_Tracking;
 use ModernCart\Inc\Slide_Out;
 use ModernCart\Inc\Slide_Out_Ajax;
 
@@ -39,11 +41,11 @@ class Plugin_Loader {
 	public function __construct() {
 		spl_autoload_register( [ $this, 'autoload' ] );
 
-		register_activation_hook( MODERNCART_FILE, [ $this, 'activate' ] );
-		add_action( 'admin_init', [ $this, 'redirect_to_onboarding' ] );
-
-		add_action( 'init', [ $this, 'save_version_info' ] );
+		register_activation_hook( __DIR__ . '/modern-cart.php', [ $this, 'activate' ] );
 		add_action( 'plugins_loaded', [ $this, 'load_classes' ] );
+		add_action( 'init', [ $this, 'save_version_info' ] );
+		add_action( 'init', [ $this, 'register_bsf_analytics_entity' ] );
+		add_action( 'admin_init', [ $this, 'redirect_to_onboarding' ] );
 		add_filter( 'plugin_action_links_' . MODERNCART_BASE, [ $this, 'action_links' ] );
 
 		do_action( 'moderncart_loaded' );
@@ -171,6 +173,8 @@ class Plugin_Loader {
 	 * @since 0.0.1
 	 */
 	public function load_classes(): void {
+		$this->load_bsf_analytics_loader();
+
 		if ( ! class_exists( 'woocommerce' ) ) {
 			return;
 		}
@@ -182,11 +186,15 @@ class Plugin_Loader {
 			Admin_Menu::get_instance();
 		}
 
+		$this->load_integration_classes();
+
 		Scripts::get_instance();
 		Floating::get_instance();
 		Slide_Out::get_instance();
 		Slide_Out_Ajax::get_instance();
 		Floating_Ajax::get_instance();
+		Register_Abilities::get_instance();
+		Order_Tracking::get_instance();
 	}
 
 	/**
@@ -205,6 +213,125 @@ class Plugin_Loader {
 		);
 
 		return array_merge( $plugin_links, $links );
+	}
+
+	/**
+	 * Require the BSF Analytics Loader and trigger its constructor.
+	 *
+	 * Runs on plugins_loaded so the BSF_Analytics_Loader class is available
+	 * for all plugins before init fires. Entity registration with translatable
+	 * strings is intentionally deferred to register_bsf_analytics_entity()
+	 * which runs on init after the textdomain has been loaded.
+	 *
+	 * @since 1.0.8
+	 * @return void
+	 */
+	public function load_bsf_analytics_loader() {
+		if ( ! class_exists( 'BSF_Analytics_Loader' ) ) {
+			require_once MODERNCART_DIR . 'inc/libraries/bsf-analytics/class-bsf-analytics-loader.php';
+		}
+	}
+
+	/**
+	 * Register the Modern Cart entity with BSF Analytics.
+	 *
+	 * Runs on init:10, registered in the constructor so it queues before
+	 * BSF_Analytics_Loader::load_analytics (registered during plugins_loaded).
+	 * Translatable strings are safe here because the textdomain is loaded by init.
+	 *
+	 * Also performs a one-time migration of the legacy cf_analytics_optin option
+	 * to mcw_usage_optin before the analytics class reads it.
+	 *
+	 * Backward compatibility matrix (keyed on MODERNCART_VER / MODERNCART_PRO_VER):
+	 *  - Latest Free + Latest Pro  (Free ≥ 1.0.8, Pro ≥ 1.2.4): Free registers entity;
+	 *    Pro defers and sends data via filter.  ← this method runs fully.
+	 *  - Latest Free + Older Pro   (Free ≥ 1.0.8, Pro < 1.2.4): Old Pro registers its
+	 *    own entity and does not defer.  Free must not register a duplicate.  ← early return.
+	 *  - Older Free + Latest Pro   (Free < 1.0.8, Pro ≥ 1.2.4): Free does not have this
+	 *    method; Pro handles analytics via its own fallback.  No conflict.
+	 *  - Older Free + Older Pro    (Free < 1.0.8, Pro < 1.2.4): Neither plugin runs this
+	 *    code; no change in behaviour.
+	 *
+	 * @since 1.0.8
+	 * @return void
+	 */
+	public function register_bsf_analytics_entity() {
+		if ( ! class_exists( 'BSF_Analytics_Loader' ) ) {
+			return;
+		}
+
+		$this->maybe_migrate_analytics_optin();
+
+		$plugin_slug   = 'modern-cart';
+		$bsf_analytics = \BSF_Analytics_Loader::get_instance();
+
+		$bsf_analytics->set_entity(
+			array(
+				'mcw' => array(
+					'hide_optin_checkbox' => true,
+					'product_name'        => 'Modern Cart',
+					'usage_doc_link'      => 'https://my.cartflows.com/usage-tracking/',
+					'path'                => MODERNCART_DIR . 'inc/libraries/bsf-analytics',
+					'author'              => 'CartFlows',
+					'deactivation_survey' => apply_filters(
+						'moderncart_bsf_analytics_deactivation_survey_data',
+						array(
+							array(
+								'id'                => 'deactivation-survey-' . $plugin_slug,
+								'popup_logo'        => MODERNCART_URL . 'admin-core/assets/images/logo.svg',
+								'plugin_slug'       => $plugin_slug,
+								'plugin_version'    => MODERNCART_VER,
+								'popup_title'       => __( 'Quick Feedback', 'modern-cart' ),
+								'support_url'       => 'https://cartflows.com/contact/',
+								'popup_description' => __( 'If you have a moment, please share why you are deactivating Modern Cart Starter:', 'modern-cart' ),
+								'show_on_screens'   => array( 'plugins' ),
+							),
+						)
+					),
+				),
+			)
+		);
+
+		require_once MODERNCART_DIR . 'inc/libraries/class-modern-cart-analytics.php';
+	}
+
+	/**
+	 * Migrate legacy cf_analytics_optin to mcw_usage_optin.
+	 *
+	 * Sites that previously ran a CartFlows-era version of this plugin may
+	 * have the analytics opt-in stored under cf_analytics_optin. This copies
+	 * the value to the current key and removes the legacy option.
+	 *
+	 * Skips silently if cf_analytics_optin does not exist, or if
+	 * mcw_usage_optin already has a value.
+	 *
+	 * @since 1.0.8
+	 * @return void
+	 */
+	private function maybe_migrate_analytics_optin() {
+		$legacy_value = get_option( 'cf_analytics_optin' );
+
+		if ( false === $legacy_value ) {
+			// Legacy option absent — nothing to migrate.
+			return;
+		}
+
+		if ( false !== get_option( 'mcw_usage_optin' ) ) {
+			// New option already set — just clean up the legacy key.
+			return;
+		}
+
+		update_option( 'mcw_usage_optin', $legacy_value );
+	}
+
+	/**
+	 * Loads integration classes like mcw-zipwp-helper.
+	 *
+	 * @since x.x.x
+	 * @return void
+	 */
+	public function load_integration_classes() {
+		require_once MODERNCART_DIR . 'inc/integrations/mcw-zipwp-helper.php';
 	}
 }
 

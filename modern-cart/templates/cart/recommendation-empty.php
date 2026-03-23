@@ -62,7 +62,7 @@ $img_wp_kses = [
 						<div class="splide__slide moderncart-empty-cart-recommendation-slider-item">
 							<div class="moderncart-cart-item-recommended-image">
 								<?php if ( $product_permalink ) : ?>
-									<a href="<?php echo esc_url( $product_permalink ); ?>">
+									<a href="<?php echo esc_url( $product_permalink ); ?>" aria-label="<?php echo esc_attr( $recommended_product->get_name() ); ?>">
 								<?php endif; ?>
 									<?php if ( wp_get_attachment_image( $recommended_product->get_image_id(), 'thumbnail' ) ) : ?>
 										<?php
@@ -97,12 +97,10 @@ $img_wp_kses = [
 							<div class="moderncart-cart-item-product-link" title="<?php echo wp_kses( $recommended_product->get_name(), $allow_wp_kses ); ?>">
 								<?php if ( $product_permalink ) : ?>
 									<a href="<?php echo esc_url( $product_permalink ); ?>">
-								<?php endif; ?>
-
-								<?php echo wp_kses( $recommended_product->get_name(), $allow_wp_kses ); ?></a>
-
-								<?php if ( $product_permalink ) : ?>
-								</a>
+										<?php echo wp_kses( $recommended_product->get_name(), $allow_wp_kses ); ?>
+									</a>
+								<?php else : ?>
+									<?php echo wp_kses( $recommended_product->get_name(), $allow_wp_kses ); ?>
 								<?php endif; ?>
 							</div>
 							<?php 

@@ -1,4 +1,18 @@
 ( function ( $ ) {
+	/**
+	 * Validate AJAX response before using its content for DOM insertion.
+	 *
+	 * @param {Object} response The AJAX response object.
+	 * @return {boolean} True if response has valid content string.
+	 */
+	function moderncartIsValidResponse( response ) {
+		return (
+			response &&
+			typeof response === 'object' &&
+			typeof response.content === 'string'
+		);
+	}
+
 	const ModernCartFrontendScripts = {
 		init() {
 			// Handle browser back/forward navigation to refresh cart state.
@@ -8,29 +22,6 @@
 					false,
 					true
 				);
-			} );
-
-			window.addEventListener( 'load', function ( e ) {
-				// Check if AJAX add to cart is disabled.
-				if ( moderncart_ajax_object.disable_ajax_add_to_cart ) {
-					// Check if single add to cart was clicked and cart drawer should auto-open.
-					if (
-						'yes' ===
-							localStorage.getItem(
-								'moderncart_single_add_to_cart_clicked'
-							) &&
-						ModernCartFrontendScripts.shouldAutoOpenCartDrawer()
-					) {
-						// Show slide out cart after a small delay.
-						setTimeout( function () {
-							ModernCartFrontendScripts.showSlideOut( e );
-						}, 300 );
-					}
-					// Clear the localStorage flag.
-					localStorage.removeItem(
-						'moderncart_single_add_to_cart_clicked'
-					);
-				}
 			} );
 
 			$( 'body' ).on( 'added_to_cart', function ( e ) {
@@ -385,10 +376,10 @@
 			);
 
 			$( '.moderncart-cart-item-quantity .quantity__button--up' ).html(
-				'<svg width="12" height="12" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#000000" class="bi bi-plus-lg"><path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/> </svg>'
+				'<svg width="12" height="12" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#000000" class="bi bi-plus-lg" aria-hidden="true" focusable="false"><path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/> </svg>'
 			);
 			$( '.moderncart-cart-item-quantity .quantity__button--down' ).html(
-				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M6 12L18 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
+				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"> <path d="M6 12L18 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
 			);
 
 			// Removed header mini cart
@@ -405,9 +396,11 @@
 			) {
 				const orderReviewHeading = $( '#order_review_heading' );
 				$( '#order_review_heading' ).append(
-					'<span class="moderncart-checkout-form-edit-link">' +
+					'<button type="button" class="moderncart-checkout-form-edit-link" aria-label="' +
 						moderncart_ajax_object.edit_cart_text +
-						'</span>'
+						'">' +
+						moderncart_ajax_object.edit_cart_text +
+						'</button>'
 				);
 				const editLink = $( '.moderncart-checkout-form-edit-link' );
 				editLink.css(
@@ -871,7 +864,11 @@
 					ModernCartFrontendScripts.beforeAjaxAction();
 				},
 				success( response ) {
-					$( '#moderncart-slide-out-modal' ).html( response.content );
+					if ( moderncartIsValidResponse( response ) ) {
+						$( '#moderncart-slide-out-modal' ).html(
+							response.content
+						);
+					}
 
 					ModernCartFrontendScripts.refreshSlideOutFloating(
 						e,
@@ -913,7 +910,11 @@
 					current.addClass( 'moderncart-loading' );
 				},
 				success( response ) {
-					$( '#moderncart-slide-out-modal' ).html( response.content );
+					if ( moderncartIsValidResponse( response ) ) {
+						$( '#moderncart-slide-out-modal' ).html(
+							response.content
+						);
+					}
 
 					ModernCartFrontendScripts.refreshFloating( e );
 					ModernCartFrontendScripts.showNotice();
@@ -971,7 +972,11 @@
 					ModernCartFrontendScripts.beforeAjaxAction();
 				},
 				success( response ) {
-					$( '#moderncart-slide-out-modal' ).html( response.content );
+					if ( moderncartIsValidResponse( response ) ) {
+						$( '#moderncart-slide-out-modal' ).html(
+							response.content
+						);
+					}
 
 					ModernCartFrontendScripts.refreshFloating( e );
 					if (
@@ -981,11 +986,19 @@
 					) {
 						ModernCartFrontendScripts.showNotice();
 					} else {
-						$( '#live-region' ).text(
+						const qtyMsg =
 							'down' === current.data( 'action' )
-								? `Quantity decreased, current quantity ${ quantity }`
-								: `Quantity increased, current quantity ${ quantity }`
-						);
+								? (
+										moderncart_ajax_object.i18n
+											?.quantity_decreased ||
+										'Quantity decreased, current quantity %d'
+								  ).replace( '%d', quantity )
+								: (
+										moderncart_ajax_object.i18n
+											?.quantity_increased ||
+										'Quantity increased, current quantity %d'
+								  ).replace( '%d', quantity );
+						$( '#live-region' ).text( qtyMsg );
 					}
 					$(
 						'.moderncart-cart-item-' +
@@ -1026,7 +1039,7 @@
 			}
 
 			$( 'body' ).append(
-				'<div class="moderncart-modal-backdrop" role="dialog" aria-modal="true"></div>'
+				'<div class="moderncart-modal-backdrop"></div>'
 			);
 			$( 'html' ).addClass( 'moderncart-trigger-open' );
 			moderncartSlideOutModal.slideToggle();
@@ -1036,7 +1049,9 @@
 				'aria-expanded',
 				'true'
 			);
-			$( '#live-region' ).text( 'Cart is opened' );
+			$( '#live-region' ).text(
+				moderncart_ajax_object.i18n?.cart_opened || 'Cart is opened'
+			);
 			ModernCartFrontendScripts.displayCartItemImages();
 			ModernCartFrontendScripts.trapCartNavigation();
 		},
@@ -1092,7 +1107,9 @@
 				'aria-expanded',
 				'false'
 			);
-			$( '#live-region' ).text( 'Cart is closed' );
+			$( '#live-region' ).text(
+				moderncart_ajax_object.i18n?.cart_closed || 'Cart is closed'
+			);
 			setTimeout( () => {
 				moderncartSlideOutModal.slideToggle();
 			}, moderncart_ajax_object.animation_speed );
@@ -1173,10 +1190,10 @@
 			moderncartInitEmptyCartProductRecommendation();
 			ModernCartFrontendScripts.displayCartItemImages();
 			$( '.moderncart-cart-item-quantity .quantity__button--up' ).html(
-				'<svg width="12" height="12" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#000000" class="bi bi-plus-lg"><path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/> </svg>'
+				'<svg width="12" height="12" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#000000" class="bi bi-plus-lg" aria-hidden="true" focusable="false"><path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/> </svg>'
 			);
 			$( '.moderncart-cart-item-quantity .quantity__button--down' ).html(
-				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M6 12L18 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
+				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"> <path d="M6 12L18 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>'
 			);
 
 			// Show "Added to cart" notification if auto-open is not set to always and event is 'added_to_cart'
@@ -1301,7 +1318,11 @@
 					ModernCartFrontendScripts.beforeAjaxAction();
 				},
 				success( response ) {
-					$( '#moderncart-slide-out-modal' ).html( response.content );
+					if ( moderncartIsValidResponse( response ) ) {
+						$( '#moderncart-slide-out-modal' ).html(
+							response.content
+						);
+					}
 
 					if ( reloadWindow ) {
 						ModernCartFrontendScripts.showSlideOut( e );
@@ -1346,7 +1367,11 @@
 					ModernCartFrontendScripts.beforeAjaxAction();
 				},
 				success( response ) {
-					$( '#moderncart-floating-cart' ).html( response.content );
+					if ( moderncartIsValidResponse( response ) ) {
+						$( '#moderncart-floating-cart' ).html(
+							response.content
+						);
+					}
 					if ( response.hide_if_empty ) {
 						if ( response.cart_count > 0 ) {
 							$( '#moderncart-floating-cart' ).removeClass(
@@ -1426,7 +1451,10 @@
 			// Focus on the back button for accessibility
 			recommendationsSlide.find( '.moderncart-slide-back' ).focus();
 
-			$( '#live-region' ).text( 'Recommendations opened' );
+			$( '#live-region' ).text(
+				moderncart_ajax_object.i18n?.recommendations_opened ||
+					'Recommendations opened'
+			);
 		},
 
 		/**
@@ -1446,13 +1474,39 @@
 			// Focus back on the recommendations button
 			$( '.moderncart-recommendations-button' ).focus();
 
-			$( '#live-region' ).text( 'Recommendations closed' );
+			$( '#live-region' ).text(
+				moderncart_ajax_object.i18n?.recommendations_closed ||
+					'Recommendations closed'
+			);
 		},
 	};
 
 	$( function () {
 		localStorage.removeItem( 'couponForm' ); // Reset localStorage value to settings value on first initialization.
 		ModernCartFrontendScripts.init();
+	} );
+
+	// Handle single product page add to cart with cart drawer auto-open
+	// This must run AFTER page load to properly check localStorage and cart state
+	window.addEventListener( 'load', function ( e ) {
+		// Check if AJAX add to cart is disabled.
+		if ( moderncart_ajax_object.disable_ajax_add_to_cart ) {
+			// Check if single add to cart was clicked and cart drawer should auto-open.
+			if (
+				'yes' ===
+					localStorage.getItem(
+						'moderncart_single_add_to_cart_clicked'
+					) &&
+				ModernCartFrontendScripts.shouldAutoOpenCartDrawer()
+			) {
+				// Show slide out cart after a small delay.
+				setTimeout( function () {
+					ModernCartFrontendScripts.showSlideOut( e );
+				}, 300 );
+			}
+			// Clear the localStorage flag.
+			localStorage.removeItem( 'moderncart_single_add_to_cart_clicked' );
+		}
 	} );
 
 	document.addEventListener( 'DOMContentLoaded', function () {
@@ -1490,11 +1544,11 @@
 				'.splide__arrow--next'
 			);
 
-			prevArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			prevArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 				<path d="M10.6 6L9.40002 7L14 12L9.40002 17L10.6 18L16 12L10.6 6Z" fill="#111827"/>
 			</svg>`;
 
-			nextArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			nextArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 				<path d="M10.6 6L9.40002 7L14 12L9.40002 17L10.6 18L16 12L10.6 6Z" fill="#111827"/>
 			</svg>`;
 
@@ -1541,11 +1595,11 @@
 				'.splide__arrow--next'
 			);
 
-			prevArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			prevArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 				<path d="M10.6 6L9.40002 7L14 12L9.40002 17L10.6 18L16 12L10.6 6Z" fill="#111827"/>
 			</svg>`;
 
-			nextArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			nextArrow.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 				<path d="M10.6 6L9.40002 7L14 12L9.40002 17L10.6 18L16 12L10.6 6Z" fill="#111827"/>
 			</svg>`;
 

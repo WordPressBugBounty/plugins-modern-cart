@@ -33,9 +33,11 @@ if ( ! function_exists( 'moderncart_get_template_part' ) ) {
 			compact( 'slug', 'name' )
 		);
 
-		if ( $args && is_array( $args ) ) {
-			extract( $args );
+		// Ensure $args is a valid array and remove keys that could overwrite critical local variables.
+		if ( ! is_array( $args ) ) {
+			$args = [];
 		}
+		unset( $args['template'], $args['slug'], $args['name'], $args['return'], $args['template_path'], $args['defaults'] );
 
 		$template = '';
 
@@ -73,6 +75,11 @@ if ( ! function_exists( 'moderncart_get_template_part' ) ) {
 
 		if ( ! $template ) {
 			return '';
+		}
+
+		// Safe extraction: EXTR_SKIP prevents overwriting any existing local variables ($template, $slug, $name, etc.).
+		if ( ! empty( $args ) && is_array( $args ) ) {
+			extract( $args, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- EXTR_SKIP is used with a blocklist of critical keys.
 		}
 
 		if ( $return ) {

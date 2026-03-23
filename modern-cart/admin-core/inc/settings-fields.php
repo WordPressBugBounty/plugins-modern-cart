@@ -176,6 +176,18 @@ class Settings_Fields {
 						'name'        => 'moderncart_setting[enable_free_shipping_bar]',
 						'priority'    => 40,
 					],
+					'moderncart_cart_enable_usage_tracking' => [
+						'type'        => 'toggle',
+						'label'       => __( 'Help Us Improve Your Experience', 'modern-cart' ),
+						'description' => sprintf(
+							/* translators: %1$s: link html start, %2$s: link html end. */
+							__( 'Allow Modern Cart and our other products to track non-sensitive usage tracking data. %1$sLearn More%2$s', 'modern-cart' ),
+							'<a href="https://my.cartflows.com/usage-tracking/?utm_source=dashboard&utm_medium=modern-cart&utm_campaign=docs" class="text-wpcolor hover:text-wphovercolor no-underline" target="_blank">',
+							'</a>'
+						),
+						'name'        => 'moderncart_cart[enable_usage_tracking]',
+						'priority'    => 45,
+					],
 				],
 				'moderncart_text'     => [
 					'moderncart_cart_main_title'         => [

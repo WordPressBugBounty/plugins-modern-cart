@@ -175,6 +175,16 @@ class Scripts extends Cart {
 					'cart_redirect_after_add'   => apply_filters( 'moderncart_redirect_after_add_to_cart', false ),
 					'cart_opening_direction'    => 'right',
 					'disable_ajax_add_to_cart'  => apply_filters( 'moderncart_disable_ajax_add_to_cart', isset( $moderncart_setting['enable_ajax_add_to_cart'] ) ? ! $moderncart_setting['enable_ajax_add_to_cart'] : false ),
+					'i18n'                      => [
+						'cart_opened'            => esc_html__( 'Cart is opened', 'modern-cart' ),
+						'cart_closed'            => esc_html__( 'Cart is closed', 'modern-cart' ),
+						/* translators: %d: current cart quantity */
+						'quantity_decreased'     => esc_html__( 'Quantity decreased, current quantity %d', 'modern-cart' ),
+						/* translators: %d: current cart quantity */
+						'quantity_increased'     => esc_html__( 'Quantity increased, current quantity %d', 'modern-cart' ),
+						'recommendations_opened' => esc_html__( 'Recommendations opened', 'modern-cart' ),
+						'recommendations_closed' => esc_html__( 'Recommendations closed', 'modern-cart' ),
+					],
 				]
 			)
 		);

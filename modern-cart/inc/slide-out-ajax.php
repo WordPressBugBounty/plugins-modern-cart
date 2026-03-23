@@ -8,6 +8,7 @@
 
 namespace ModernCart\Inc;
 
+use ModernCart\Inc\Order_Tracking;
 use ModernCart\Inc\Traits\Get_Instance;
 use WC_Coupon;
 use WC_Discounts;
@@ -106,6 +107,7 @@ class Slide_Out_Ajax extends Slide_Out {
 
 				if ( WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variations ) ) {
 					do_action( 'moderncart_woocommerce_ajax_added_to_cart', $product_id );
+					Order_Tracking::flag_session();
 
 					/* translators: %s: product name */
 					$message      = $product instanceof \WC_Product ? sprintf( esc_html__( '"%s" has been added to the cart.', 'modern-cart' ), esc_html( $product->get_name() ) ) : '';
@@ -153,12 +155,14 @@ class Slide_Out_Ajax extends Slide_Out {
 			wp_die();
 		}
 
-		$coupon_code = ( isset( $_POST['coupon'] ) ? wc_format_coupon_code( sanitize_text_field( wp_unslash( $_POST['coupon'] ) ) ) : false );
+		$coupon_code  = ( isset( $_POST['coupon'] ) ? wc_format_coupon_code( sanitize_text_field( wp_unslash( $_POST['coupon'] ) ) ) : false );
+		$message_type = '';
 
 		if ( $coupon_code ) {
 			if ( ! WC()->cart->has_discount( $coupon_code ) ) {
 
 				if ( WC()->cart->apply_coupon( $coupon_code ) ) {
+					Order_Tracking::flag_session();
 					$message      = esc_html__( 'Your coupon code was applied successfully.', 'modern-cart' );
 					$message_type = 'success';
 				} else {
@@ -167,13 +171,16 @@ class Slide_Out_Ajax extends Slide_Out {
 					$valid     = $discounts->is_coupon_valid( $coupon );
 
 					if ( is_wp_error( $valid ) ) {
-						WC()->session->set( 'moderncart_coupon_error', $valid->get_error_message() );
+						$message = $valid->get_error_message();
+
+						if ( $message ) {
+							$message = wp_kses_post( $message );
+							WC()->session->set( 'moderncart_coupon_error', $message );
+							$message_type = 'error';
+						}
 					}
 
-					if ( is_wp_error( $valid ) && $valid->get_error_message() ) {
-						$message      = $valid->get_error_message();
-						$message_type = 'error';
-					} else {
+					if ( empty( $message ) ) {
 						$message      = esc_html__( 'Sorry, this coupon code is not valid!', 'modern-cart' );
 						$message_type = 'error';
 					}
@@ -229,6 +236,7 @@ class Slide_Out_Ajax extends Slide_Out {
 			$message_type = 'error';
 		} else {
 			WC()->cart->remove_coupon( $coupon );
+			Order_Tracking::flag_session();
 			$message      = esc_html__( 'Coupon has been removed.', 'modern-cart' );
 			$message_type = 'success';
 
@@ -336,6 +344,8 @@ class Slide_Out_Ajax extends Slide_Out {
 			$action = WC()->cart->remove_cart_item( $cart_key );
 		}
 
+		Order_Tracking::flag_session();
+
 		$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $message ) . '">' . esc_html( $message ) . '</div>';
 
 		$data = [
@@ -420,6 +430,7 @@ class Slide_Out_Ajax extends Slide_Out {
 
 		if ( $cart_item ) {
 			WC()->cart->remove_cart_item( Helper::convert_to_string( $cart_item_key ) );
+			Order_Tracking::flag_session();
 			$product = moderncart_get_product_by_id( $cart_item['product_id'] );
 			/* Translators: %s Product title. */
 			$item_removed_title = apply_filters( 'moderncart_cart_item_removed_title', ( $product ? sprintf( esc_html_x( '&ldquo;%s&rdquo;', 'Item name in quotes', 'modern-cart' ), esc_html( $product->get_name() ) ) : esc_html__( 'Item', 'modern-cart' ) ), $cart_item );

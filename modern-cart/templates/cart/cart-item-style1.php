@@ -112,9 +112,9 @@ $allow_quantity_kses = [
 ];
 ?>
 
-<div class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?> moderncart-cart-item-<?php echo esc_attr( $cart_item_key ); ?>" data-key="<?php echo esc_attr( $cart_item_key ); ?>" role="row">
+<div class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?> moderncart-cart-item-<?php echo esc_attr( $cart_item_key ); ?>" data-key="<?php echo esc_attr( $cart_item_key ); ?>" role="listitem">
 
-	<div class="moderncart-cart-item-container" role="cell">
+	<div class="moderncart-cart-item-container">
 
 			<div class="moderncart-cart-item-image">
 				<?php if ( $product_permalink ) : ?>
@@ -157,7 +157,7 @@ $allow_quantity_kses = [
 		</div>
 	</div>
 
-	<div class="moderncart-cart-item-actions" role="cell">
+	<div class="moderncart-cart-item-actions">
 		<?php if ( $quantity ) : ?>
 			<?php echo wp_kses( $quantity, $allow_quantity_kses ); ?>
 		<?php endif; ?>
