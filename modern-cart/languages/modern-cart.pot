@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Modern Cart Starter for WooCommerce 1.0.9\n"
+"Project-Id-Version: Modern Cart Starter for WooCommerce 1.0.10\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-cart\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-16T11:10:46+00:00\n"
+"POT-Creation-Date: 2026-06-16T05:38:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: modern-cart\n"
@@ -779,56 +779,56 @@ msgstr ""
 msgid "Discount"
 msgstr ""
 
-#: inc/cart.php:291
+#: inc/cart.php:298
 #: admin-core/assets/build/settings.js:7
 msgid "Total"
 msgstr ""
 
 #. translators: %s: country name for tax estimation.
-#: inc/cart.php:339
+#: inc/cart.php:346
 #, php-format
 msgid "estimated for %s"
 msgstr ""
 
 #. translators: %s: tax amount and estimated text.
-#: inc/cart.php:350
+#: inc/cart.php:357
 #, php-format
 msgid "(includes %s)"
 msgstr ""
 
-#: inc/cart.php:394
+#: inc/cart.php:401
 msgid "Cart Subtotal"
 msgstr ""
 
-#: inc/cart.php:395
+#: inc/cart.php:402
 msgid "Shipping Cost"
 msgstr ""
 
-#: inc/cart.php:396
+#: inc/cart.php:403
 msgid "Tax Amount"
 msgstr ""
 
-#: inc/cart.php:397
+#: inc/cart.php:404
 msgid "Discount Amount"
 msgstr ""
 
-#: inc/cart.php:398
+#: inc/cart.php:405
 msgid "Cart Total"
 msgstr ""
 
 #. translators: %1$s: field label , %2$s: field value
-#: inc/cart.php:411
+#: inc/cart.php:418
 #, php-format
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: inc/cart.php:542
+#: inc/cart.php:549
 #: inc/helper.php:115
 #: admin-core/assets/build/settings.js:7
 msgid "You're {amount} away from free shipping!"
 msgstr ""
 
-#: inc/cart.php:549
+#: inc/cart.php:556
 #: inc/helper.php:119
 #: admin-core/assets/build/settings.js:7
 msgid "Awesome pick! You've unlocked free shipping."
@@ -851,7 +851,7 @@ msgid "%1$s %2$s"
 msgstr ""
 
 #: inc/helper.php:91
-#: inc/slide-out.php:444
+#: inc/slide-out.php:445
 #: admin-core/assets/build/settings.js:7
 msgid "Review Your Cart"
 msgstr ""
@@ -865,15 +865,15 @@ msgid "Let's find you something perfect"
 msgstr ""
 
 #: inc/helper.php:103
-#: inc/slide-out.php:371
-#: inc/slide-out.php:424
+#: inc/slide-out.php:372
+#: inc/slide-out.php:425
 #: admin-core/assets/build/settings.js:7
 msgid "Got a Discount Code?"
 msgstr ""
 
 #: inc/helper.php:107
-#: inc/slide-out.php:372
-#: inc/slide-out.php:425
+#: inc/slide-out.php:373
+#: inc/slide-out.php:426
 #: admin-core/assets/build/settings.js:7
 msgid "Enter discount code"
 msgstr ""
@@ -970,7 +970,7 @@ msgid "Oops! Something went wrong. Please refresh the page and try again."
 msgstr ""
 
 #: inc/libraries/bsf-analytics/modules/deactivation-survey/classes/class-deactivation-survey-feedback.php:80
-#: plugin-loader.php:345
+#: plugin-loader.php:362
 msgid "Quick Feedback"
 msgstr ""
 
@@ -1086,7 +1086,7 @@ msgid "Product Data missing"
 msgstr ""
 
 #: inc/slide-out-ajax.php:104
-#: inc/slide-out-ajax.php:339
+#: inc/slide-out-ajax.php:353
 msgid "Did not pass security check"
 msgstr ""
 
@@ -1101,153 +1101,161 @@ msgid "You cannot add another \"%s\" to your cart."
 msgstr ""
 
 #. translators: %s: product name
-#: inc/slide-out-ajax.php:141
+#: inc/slide-out-ajax.php:152
 #, php-format
 msgid "\"%s\" has been added to the cart."
 msgstr ""
 
-#: inc/slide-out-ajax.php:144
+#: inc/slide-out-ajax.php:155
 msgid "Product not added on cart. Try again."
 msgstr ""
 
-#: inc/slide-out-ajax.php:217
+#: inc/slide-out-ajax.php:231
 msgid "Your coupon code was applied successfully."
 msgstr ""
 
-#: inc/slide-out-ajax.php:235
+#: inc/slide-out-ajax.php:249
 msgid "Sorry, this coupon code is not valid!"
 msgstr ""
 
-#: inc/slide-out-ajax.php:240
+#: inc/slide-out-ajax.php:254
 msgid "Sorry, this coupon code is already applied!"
 msgstr ""
 
-#: inc/slide-out-ajax.php:244
+#: inc/slide-out-ajax.php:258
 msgid "Enter a coupon code!"
 msgstr ""
 
-#: inc/slide-out-ajax.php:286
+#: inc/slide-out-ajax.php:300
 msgid "Sorry there was a problem removing this coupon."
 msgstr ""
 
-#: inc/slide-out-ajax.php:291
+#: inc/slide-out-ajax.php:305
 msgid "Coupon has been removed."
 msgstr ""
 
 #. translators: %s: product name
-#: inc/slide-out-ajax.php:360
+#: inc/slide-out-ajax.php:379
 #, php-format
 msgid "Sorry, \"%s\" is not in stock. Please edit your cart and try again. We apologize for any inconvenience caused."
 msgstr ""
 
 #. translators: %s: product name
-#: inc/slide-out-ajax.php:367
+#: inc/slide-out-ajax.php:386
 #, php-format
 msgid "\"%s\" has been updated."
 msgstr ""
 
 #. translators: 1: product name 2: quantity in stock
-#: inc/slide-out-ajax.php:377
+#: inc/slide-out-ajax.php:396
 #, php-format
 msgid "Sorry, we do not have enough \"%1$s\" in stock to fulfill your order (%2$s available). We apologize for any inconvenience caused."
 msgstr ""
 
 #. translators: %s: product name
-#: inc/slide-out-ajax.php:384
+#: inc/slide-out-ajax.php:403
 #, php-format
 msgid "\"%s\" was removed from your cart"
 msgstr ""
 
-#: inc/slide-out-ajax.php:442
+#: inc/slide-out-ajax.php:413
+msgid "Bundled items are managed by their bundle and cannot be changed individually."
+msgstr ""
+
+#: inc/slide-out-ajax.php:469
 msgid "Cart updated successfully!"
 msgstr ""
 
+#: inc/slide-out-ajax.php:515
+msgid "Bundled items are managed by their bundle and cannot be removed individually."
+msgstr ""
+
 #. Translators: %s Product title.
-#: inc/slide-out-ajax.php:488
+#: inc/slide-out-ajax.php:525
 #, php-format
 msgctxt "Item name in quotes"
 msgid "&ldquo;%s&rdquo;"
 msgstr ""
 
 #. Translators: %s Product title.
-#: inc/slide-out-ajax.php:488
+#: inc/slide-out-ajax.php:525
 msgid "Item"
 msgstr ""
 
 #. Translators: %s Product title.
-#: inc/slide-out-ajax.php:492
-#: inc/slide-out-ajax.php:496
+#: inc/slide-out-ajax.php:529
+#: inc/slide-out-ajax.php:533
 #, php-format
 msgid "%s removed."
 msgstr ""
 
-#: inc/slide-out-ajax.php:493
+#: inc/slide-out-ajax.php:530
 msgid "Undo?"
 msgstr ""
 
-#: inc/slide-out.php:76
+#: inc/slide-out.php:77
 msgid "OR"
 msgstr ""
 
-#: inc/slide-out.php:133
+#: inc/slide-out.php:134
 msgid "Your Cart Is Empty, Let's Fix That!"
 msgstr ""
 
-#: inc/slide-out.php:135
+#: inc/slide-out.php:136
 msgid "Add"
 msgstr ""
 
-#: inc/slide-out.php:294
+#: inc/slide-out.php:295
 msgid "Applied Coupons"
 msgstr ""
 
 #. translators: %1$s is replaced with the coupon name and %2$s with the coupon amount
-#: inc/slide-out.php:318
+#: inc/slide-out.php:319
 #, php-format
 msgid "Coupon \"%1$s\" (%2$s)"
 msgstr ""
 
 #. translators: %1$s is replaced with the coupon name and %2$s with the coupon amount
-#: inc/slide-out.php:326
+#: inc/slide-out.php:327
 #, php-format
 msgid "Remove coupon %1$s (%2$s)"
 msgstr ""
 
-#: inc/slide-out.php:327
+#: inc/slide-out.php:328
 msgid "Remove coupon"
 msgstr ""
 
-#: inc/slide-out.php:373
+#: inc/slide-out.php:374
 #: admin-core/assets/build/settings.js:7
 msgid "Apply"
 msgstr ""
 
-#: inc/slide-out.php:403
+#: inc/slide-out.php:404
 msgid "Checkout now"
 msgstr ""
 
-#: inc/slide-out.php:406
+#: inc/slide-out.php:407
 msgid "Your cart is empty. Shop now"
 msgstr ""
 
-#: inc/slide-out.php:449
+#: inc/slide-out.php:450
 msgid "Your Cart Is Empty"
 msgstr ""
 
-#: inc/slide-out.php:536
+#: inc/slide-out.php:542
 #: admin-core/assets/build/settings.js:7
 msgid "Check out our shop to see what's available"
 msgstr ""
 
-#: inc/slide-out.php:658
+#: inc/slide-out.php:665
 msgid "View details"
 msgstr ""
 
-#: inc/slide-out.php:660
+#: inc/slide-out.php:667
 msgid "Product details"
 msgstr ""
 
-#: inc/slide-out.php:666
+#: inc/slide-out.php:673
 msgid "Available on backorder"
 msgstr ""
 
@@ -1261,33 +1269,33 @@ msgstr ""
 msgid "You're using an older version of %1$sModern Cart for WooCommerce%2$s. Please update to version %1$s1.2.0 or higher%2$s so it works smoothly with %1$sModern Cart Starter%2$s."
 msgstr ""
 
-#: plugin-loader.php:260
+#: plugin-loader.php:277
 #: admin-core/assets/build/settings.js:1
 msgid "Settings"
 msgstr ""
 
-#: plugin-loader.php:347
+#: plugin-loader.php:364
 msgid "If you have a moment, please share why you are deactivating Modern Cart Starter:"
 msgstr ""
 
 #. translators: %s: product name
-#: templates/cart/cart-item-style1.php:124
-#: templates/cart/cart-item-style2.php:123
+#: templates/cart/cart-item-style1.php:125
+#: templates/cart/cart-item-style2.php:125
 #, php-format
 msgid "View %s product page"
 msgstr ""
 
-#: templates/cart/cart-item-style1.php:133
-#: templates/cart/cart-item-style2.php:132
+#: templates/cart/cart-item-style1.php:134
+#: templates/cart/cart-item-style2.php:134
 msgid "Sale!"
 msgstr ""
 
-#: templates/cart/cart-item-style1.php:151
-#: templates/cart/cart-item-style2.php:153
+#: templates/cart/cart-item-style1.php:152
+#: templates/cart/cart-item-style2.php:155
 msgid "Remove Item From Cart"
 msgstr ""
 
-#: templates/cart/cart-item-style1.php:154
+#: templates/cart/cart-item-style1.php:155
 #: admin-core/assets/build/settings.js:7
 msgid "Remove"
 msgstr ""
@@ -1365,19 +1373,19 @@ msgstr ""
 msgid "Price:"
 msgstr ""
 
-#: templates/cart/quantity-selector.php:16
+#: templates/cart/quantity-selector.php:23
 msgid "Quantity controls"
 msgstr ""
 
-#: templates/cart/quantity-selector.php:21
+#: templates/cart/quantity-selector.php:28
 msgid "Decrease quantity"
 msgstr ""
 
-#: templates/cart/quantity-selector.php:29
+#: templates/cart/quantity-selector.php:37
 msgid "Quantity"
 msgstr ""
 
-#: templates/cart/quantity-selector.php:52
+#: templates/cart/quantity-selector.php:61
 msgid "Increase quantity"
 msgstr ""
 

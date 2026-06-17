@@ -534,6 +534,12 @@ html.moderncart-trigger-open body {
 	outline: 0;
 }
 
+/* Bundled (child) items are controlled by their parent bundle: keep the quantity controls visible but disabled. */
+#moderncart-slide-out .moderncart-cart-item-quantity--readonly {
+	opacity: 0.55;
+	pointer-events: none;
+}
+
 .moderncart-modal-backdrop[role="dialog"] {
 	background-color: rgba( 33, 42, 47, 0.89 );
 	bottom: 0;

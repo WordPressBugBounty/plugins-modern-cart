@@ -3,7 +3,7 @@ Contributors: brainstormforce
 Tags: woocommerce side cart, floating cart, cart drawer, popup cart, free shipping bar
 Requires at least: 5.4
 Tested up to: 6.9
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -219,6 +219,13 @@ Welcome to Modern Cart! [Click here](https://cartflows.com/docs-category/modern-
 5. Settings panel
 
 == Changelog ==
+
+= Version 1.0.10 - Wednesday, 17th June 2026 =
+* Fix: Fixed the header cart icon not updating on cart actions for themes using WooCommerce cart fragments.
+* Fix: Fixed WooCommerce Product Bundles compatibility for cart quantities and slide-out behavior.
+* Fix: Fixed incorrect coupon discount in the cart when prices are displayed including tax.
+* Fix: Fixed the onboarding wizard hijacking unrelated admin navigation when activated alongside other plugins.
+* Fix: Fixed an error in the cart and slide-out helpers during bot crawls and 404 pages when WooCommerce had not initialized the cart.
 
 = Version 1.0.9 - Friday, 17th April 2026 =
 * New: Added an option to delete plugin data on uninstall.

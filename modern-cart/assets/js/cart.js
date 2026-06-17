@@ -669,10 +669,18 @@
 		 */
 		addToCartProductPage: ( e, current ) => {
 			e.preventDefault();
+			// Read the top-level quantity from the cart form. Product Bundles renders a
+			// quantity field for each bundled child item, and `$( '.quantity .qty' )` would
+			// otherwise return the first one (a child's quantity) instead of the bundle's.
+			const $cartForm = $( 'form.cart' );
+			const topLevelQty =
+				$cartForm
+					.find( '.quantity input.qty[name="quantity"]' )
+					.val() || $( '.quantity .qty' ).val();
 			let productData = [
 				{
 					productId: current.val(),
-					quantity: $( '.quantity .qty' ).val(),
+					quantity: topLevelQty,
 				},
 			];
 
@@ -761,7 +769,7 @@
 						true
 					);
 					ModernCartFrontendScripts.afterAjaxAction();
-					ModernCartFrontendScripts.triggerRefetchFragements();
+					ModernCartFrontendScripts.applyFragments( response );
 					current.removeClass( 'moderncart-loading' );
 					current.removeAttr( 'disabled' );
 
@@ -816,7 +824,7 @@
 					ModernCartFrontendScripts.beforeAjaxAction();
 					current.addClass( 'moderncart-loading' );
 				},
-				success() {
+				success( response ) {
 					// Close recommendations slide if adding from there
 					if ( isFromRecommendationsSlide ) {
 						ModernCartFrontendScripts.hideRecommendationsSlide();
@@ -828,7 +836,7 @@
 						true
 					);
 					ModernCartFrontendScripts.afterAjaxAction();
-					ModernCartFrontendScripts.triggerRefetchFragements();
+					ModernCartFrontendScripts.applyFragments( response );
 					current.removeClass( 'moderncart-loading' );
 				},
 				error() {
@@ -1013,7 +1021,7 @@
 					}
 
 					ModernCartFrontendScripts.afterAjaxAction();
-					ModernCartFrontendScripts.triggerRefetchFragements();
+					ModernCartFrontendScripts.applyFragments( response );
 				},
 				error() {
 					ModernCartFrontendScripts.showGeneralError( e );
@@ -1266,7 +1274,7 @@
 				beforeSend: () => {
 					ModernCartFrontendScripts.beforeAjaxAction();
 				},
-				success() {
+				success( response ) {
 					$(
 						'.moderncart-cart-item-' + current.data( 'key' )
 					).remove();
@@ -1283,7 +1291,7 @@
 						ModernCartFrontendScripts.showNotice();
 					}
 					ModernCartFrontendScripts.afterAjaxAction();
-					ModernCartFrontendScripts.triggerRefetchFragements();
+					ModernCartFrontendScripts.applyFragments( response );
 				},
 				error() {
 					ModernCartFrontendScripts.showGeneralError( e );
@@ -1398,6 +1406,28 @@
 		 */
 		triggerRefetchFragements: () => {
 			jQuery( document.body ).trigger( 'wc_fragment_refresh' );
+		},
+
+		/**
+		 * Apply WooCommerce cart fragments returned in an AJAX response so
+		 * fragment-based theme header carts (Astra, etc.) update instantly.
+		 *
+		 * Falls back to triggering a fresh fragment fetch when the response
+		 * does not carry fragments.
+		 *
+		 * @since 1.0.10
+		 *
+		 * @param {Object} response The AJAX response object.
+		 */
+		applyFragments: ( response ) => {
+			if ( response && response.fragments ) {
+				jQuery.each( response.fragments, function ( key, value ) {
+					jQuery( key ).replaceWith( value );
+				} );
+				jQuery( document.body ).trigger( 'wc_fragments_refreshed' );
+			} else {
+				ModernCartFrontendScripts.triggerRefetchFragements();
+			}
 		},
 
 		/**

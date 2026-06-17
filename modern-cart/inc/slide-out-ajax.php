@@ -123,6 +123,17 @@ class Slide_Out_Ajax extends Slide_Out {
 					}
 				}
 
+				/*
+				 * WooCommerce Product Bundles (and similar composite types) render a quantity
+				 * field for each bundled child item ahead of the bundle's own quantity, so the
+				 * serialised AJAX payload can carry a child item's quantity in productData. Trust
+				 * the top-level form quantity for these product types instead.
+				 */
+				$bundle_types = (array) apply_filters( 'moderncart_supported_bundle_product_types', [ 'bundle' ] );
+				if ( in_array( $product_to_add->get_type(), $bundle_types, true ) && isset( $form_entries['quantity'] ) ) {
+					$quantity = max( 1, absint( $form_entries['quantity'] ) );
+				}
+
 				// Merge form entries into $_POST so third-party plugins can read their custom fields.
 				if ( ! empty( $form_entries ) ) {
 					$_POST = array_merge( $product, $form_entries ); //phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
@@ -163,10 +174,13 @@ class Slide_Out_Ajax extends Slide_Out {
 		$result = ob_get_contents();
 		ob_end_clean();
 
-		$return = [
-			'content'     => $result,
-			'redirect_to' => $url,
-		];
+		$return = array_merge(
+			[
+				'content'     => $result,
+				'redirect_to' => $url,
+			],
+			$this->get_cart_fragments()
+		);
 		wp_send_json( $return );
 	}
 
@@ -347,12 +361,17 @@ class Slide_Out_Ajax extends Slide_Out {
 		$message_type             = '';
 		$removed                  = false;
 		$in_stock                 = true;
+		$is_bundled_child         = false;
 		$product_qty_in_cart      = WC()->cart->get_cart_item_quantities();
 		$current_session_order_id = ( isset( WC()->session->order_awaiting_payment ) ? absint( WC()->session->order_awaiting_payment ) : 0 );
 
 		foreach ( WC()->cart->get_cart() as $cart_item_key => $values ) {
 			if ( $cart_key === $cart_item_key ) {
 				$product = $values['data'];
+
+				// Child items of a Product Bundle are controlled by the parent bundle; their
+				// quantity must not be changed individually or Product Bundles rescales them.
+				$is_bundled_child = ! empty( $values['bundled_by'] );
 
 				if ( $product->managing_stock() && $quantity > $product->get_stock_quantity() ) {
 					$in_stock = false;
@@ -389,11 +408,19 @@ class Slide_Out_Ajax extends Slide_Out {
 			}
 		}
 
-		if ( $in_stock && $quantity > 0 ) {
+		if ( $is_bundled_child ) {
+			// Bundled child quantities are managed by their parent bundle - leave the cart unchanged.
+			$message      = esc_html__( 'Bundled items are managed by their bundle and cannot be changed individually.', 'modern-cart' );
+			$message_type = 'error';
+		} elseif ( $in_stock && $quantity > 0 ) {
 			$action = WC()->cart->set_quantity( $cart_key, Helper::convert_to_int( $quantity ) );
 		} elseif ( $removed ) {
 			$action = WC()->cart->remove_cart_item( $cart_key );
 		}
+
+		// Recalculate totals and notify WooCommerce so cart fragments reflect the new state.
+		WC()->cart->calculate_totals();
+		do_action( 'woocommerce_cart_updated' );
 
 		Order_Tracking::flag_session();
 
@@ -414,7 +441,7 @@ class Slide_Out_Ajax extends Slide_Out {
 		$result = ob_get_contents();
 		ob_end_clean();
 
-		$return = [ 'content' => $result ];
+		$return = array_merge( [ 'content' => $result ], $this->get_cart_fragments() );
 		wp_send_json( $return );
 	}
 
@@ -480,6 +507,16 @@ class Slide_Out_Ajax extends Slide_Out {
 		$cart_item      = WC()->cart->get_cart_item( Helper::convert_to_string( $cart_item_key ) );
 		$removed_notice = '';
 
+		// A bundled child item cannot be removed on its own; the parent bundle controls it.
+		if ( $cart_item && ! empty( $cart_item['bundled_by'] ) ) {
+			wp_send_json(
+				[
+					'success' => 0,
+					'notice'  => esc_html__( 'Bundled items are managed by their bundle and cannot be removed individually.', 'modern-cart' ),
+				]
+			);
+		}
+
 		if ( $cart_item ) {
 			WC()->cart->remove_cart_item( Helper::convert_to_string( $cart_item_key ) );
 			Order_Tracking::flag_session();
@@ -499,12 +536,38 @@ class Slide_Out_Ajax extends Slide_Out {
 			WC()->session->set( 'moderncart_last_removed_item_name', $item_removed_title );
 		}
 
+		// Recalculate totals and notify WooCommerce so cart fragments reflect the new state.
+		WC()->cart->calculate_totals();
+		do_action( 'woocommerce_cart_updated' );
+
 		wc_clear_notices();
 
-		$return = [
-			'success' => 1,
-			'notice'  => $removed_notice,
-		];
+		$return = array_merge(
+			[
+				'success' => 1,
+				'notice'  => $removed_notice,
+			],
+			$this->get_cart_fragments()
+		);
 		wp_send_json( $return );
+	}
+
+	/**
+	 * Build the WooCommerce cart fragments payload to merge into AJAX responses.
+	 *
+	 * Uses the standard `woocommerce_add_to_cart_fragments` filter that themes
+	 * (Astra and others) hook into to register their header cart HTML, so
+	 * fragment-based header carts update instantly from the AJAX response
+	 * without a separate `get_refreshed_fragments` round-trip.
+	 *
+	 * @since 1.0.10
+	 *
+	 * @return array{fragments: array<string, string>, cart_hash: string}
+	 */
+	private function get_cart_fragments(): array {
+		return [
+			'fragments' => apply_filters( 'woocommerce_add_to_cart_fragments', [] ),
+			'cart_hash' => WC()->cart->get_cart_hash(),
+		];
 	}
 }

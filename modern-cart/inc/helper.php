@@ -232,7 +232,10 @@ class Helper {
 	 * @return bool
 	 */
 	public static function is_cart_empty() {
-		return null !== WC()->cart && WC()->cart->is_empty();
+		if ( ! function_exists( 'WC' ) || null === WC()->cart ) {
+			return true;
+		}
+		return WC()->cart->is_empty();
 	}
 
 	/**

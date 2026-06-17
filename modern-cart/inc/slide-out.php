@@ -446,7 +446,7 @@ class Slide_Out extends Cart {
 			'quantity' => Helper::get_cart_count(),
 		];
 
-		if ( empty( WC()->cart->get_cart() ) ) {
+		if ( Helper::is_cart_empty() ) {
 			$data['title'] = esc_html__( 'Your Cart Is Empty', 'modern-cart' );
 		}
 
@@ -493,7 +493,11 @@ class Slide_Out extends Cart {
 							$cart_item_key
 						);
 						$name     = $this->get_product_name( $cart_item, $cart_item_key );
-						$data     = [
+
+						// Child items of a Product Bundle are controlled by the parent bundle, so
+						// their quantity is shown read-only and they cannot be removed individually.
+						$is_bundled_child = ! empty( $cart_item['bundled_by'] );
+						$data             = [
 							'product_name'      => $name,
 							'classes'           => apply_filters( 'moderncart_slide_out_cart_item_classes', [ 'moderncart-cart-item' ] ),
 							'quantity'          => $this->render_quantity_selectors(
@@ -504,11 +508,12 @@ class Slide_Out extends Cart {
 									'min_value'     => $_product->get_min_purchase_quantity(),
 									'product_name'  => $name,
 									'cart_item_key' => $cart_item_key,
+									'is_bundled'    => $is_bundled_child,
 								],
 								$_product,
 								true
 							),
-							'delete'            => true,
+							'delete'            => ! $is_bundled_child,
 							'cart_item'         => $cart_item,
 							'cart_item_key'     => $cart_item_key,
 							'product'           => $_product,
@@ -585,6 +590,7 @@ class Slide_Out extends Cart {
 			'product_name'  => $product->get_title(),
 			'placeholder'   => apply_filters( 'moderncart_woocommerce_quantity_input_placeholder', '', $product ),
 			'cart_item_key' => '',
+			'is_bundled'    => false,
 		];
 		$data              = apply_filters( 'moderncart_woocommerce_quantity_input_args', wp_parse_args( $data, $defaults ), $product );
 		$data['min_value'] = max( $data['min_value'], 0 );

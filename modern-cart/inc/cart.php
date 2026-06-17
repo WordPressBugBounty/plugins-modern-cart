@@ -256,8 +256,15 @@ class Cart {
 
 		$label          = esc_html__( 'Discount', 'modern-cart' );
 		$discount_total = WC()->cart->get_cart_discount_total();
-		$value          = wc_price( $discount_total );
-		$html           = '';
+
+		// When prices are displayed including tax, add the discount tax portion so the
+		// displayed discount matches WooCommerce checkout (get_cart_discount_total() is ex-tax).
+		if ( wc_tax_enabled() && WC()->cart->display_prices_including_tax() ) {
+			$discount_total += WC()->cart->get_discount_tax();
+		}
+
+		$value = wc_price( $discount_total );
+		$html  = '';
 
 		if ( $discount_total > 0 ) {
 			if ( ! $wrapper ) {

@@ -47,7 +47,9 @@ class Plugin_Loader {
 		add_action( 'init', [ $this, 'save_version_info' ] );
 		add_action( 'init', [ $this, 'register_bsf_analytics_entity' ], 20 );
 		add_action( 'admin_init', [ $this, 'redirect_to_onboarding' ] );
-		add_filter( 'plugin_action_links_' . MODERNCART_BASE, [ $this, 'action_links' ] );
+		if ( defined( 'MODERNCART_BASE' ) ) {
+			add_filter( 'plugin_action_links_' . MODERNCART_BASE, [ $this, 'action_links' ] );
+		}
 
 		do_action( 'moderncart_loaded' );
 	}
@@ -102,7 +104,11 @@ class Plugin_Loader {
 			return;
 		}
 
-		set_transient( 'moderncart_redirect_to_onboarding', 'yes' );
+		// Short-lived flag: the onboarding redirect is only relevant on the page
+		// load immediately following activation. Expiring it after 30 seconds
+		// prevents a stale flag from hijacking an unrelated admin navigation later
+		// (e.g. when Modern Cart is activated alongside another plugin).
+		set_transient( 'moderncart_redirect_to_onboarding', 'yes', 30 );
 	}
 
 	/**
@@ -113,8 +119,21 @@ class Plugin_Loader {
 			return;
 		}
 
-		// Avoid redirection in case of ajax calls.
-		if ( wp_doing_ajax() ) {
+		// Never redirect during AJAX, cron, or network-admin requests.
+		if ( wp_doing_ajax() || wp_doing_cron() || is_network_admin() ) {
+			return;
+		}
+
+		global $pagenow;
+
+		// Only auto-open onboarding from the Plugins screen — the page WordPress
+		// lands on right after a single activation. This stops the flag from
+		// hijacking an unrelated navigation (e.g. Power Coupons "Add coupon",
+		// which loads post-new.php) when the redirect did not fire on activation,
+		// such as when Modern Cart is activated alongside another plugin. Also skip
+		// bulk activation, where the user expects to stay on the plugins list.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 'plugins.php' !== $pagenow || isset( $_GET['activate-multi'] ) ) {
 			return;
 		}
 

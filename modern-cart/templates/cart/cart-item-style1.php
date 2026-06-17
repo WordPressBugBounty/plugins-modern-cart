@@ -95,6 +95,7 @@ $allow_quantity_kses = [
 		'aria-valuenow' => [],
 		'aria-live'     => [],
 		'aria-atomic'   => [],
+		'disabled'      => [],
 	],
 	'div'    => [
 		'class'           => [],
@@ -107,7 +108,7 @@ $allow_quantity_kses = [
 		'data-action' => [],
 		'aria-label'  => [],
 		'tabindex'    => [],
-		
+		'disabled'    => [],
 	],
 ];
 ?>
