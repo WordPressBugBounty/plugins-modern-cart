@@ -113,6 +113,11 @@ class Floating extends Cart {
 			return;
 		}
 
+		// The launcher renders a live cart count, so it needs the cart object.
+		if ( ! Helper::is_cart_available() ) {
+			return;
+		}
+
 		$hide_if_empty  = $this->get_option( 'enable_floating_if_empty', MODERNCART_FLOATING_SETTINGS, false );
 		$cart_icon      = $this->get_option( 'floating_cart_icon', MODERNCART_FLOATING_SETTINGS, 0 );
 		$cart_svg_icons = Helper::get_cart_icons();

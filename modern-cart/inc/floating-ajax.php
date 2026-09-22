@@ -42,8 +42,14 @@ class Floating_Ajax extends Floating {
 		}
 
 		if ( 'disabled' === $this->get_option( 'floating_cart_position', MODERNCART_FLOATING_SETTINGS, 'bottom-left' ) ) {
-			return;
+			// Send a valid JSON response with no `content` key. Returning here
+			// without a response body makes the jQuery `dataType: 'json'` call
+			// fail to parse and fall through to its error handler. Omitting
+			// `content` keeps the existing DOM untouched, as before.
+			wp_send_json( [ 'floating_cart_disabled' => true ] );
 		}
+
+		$this->bail_if_cart_unavailable();
 
 		$hide_if_empty  = $this->get_option( 'enable_floating_if_empty', MODERNCART_FLOATING_SETTINGS, false );
 		$cart_count     = Helper::get_cart_count();

@@ -59,8 +59,8 @@ $up_disabled = ( $max_value === $quantity ) || $is_bundled;
 			data-key="<?php echo esc_attr( $cart_item_key ); ?>"
 			data-action="up"
 			aria-label="<?php esc_attr_e( 'Increase quantity', 'modern-cart' ); ?>"
-			<?php disabled( $is_bundled ); ?>
-			tabindex="<?php echo esc_attr( $tab_index ); ?>">
+			<?php disabled( $up_disabled ); ?>
+			tabindex="<?php echo esc_attr( $up_disabled ? '-1' : $tab_index ); ?>">
 			<svg aria-hidden="true" focusable="false" role="presentation" class="moderncart-icon" viewbox="0 0 20 20"><path fill="#444" d="M17.409 8.929h-6.695V2.258c0-.566-.506-1.029-1.071-1.029s-1.071.463-1.071 1.029v6.671H1.967C1.401 8.929.938 9.435.938 10s.463 1.071 1.029 1.071h6.605V17.7c0 .566.506 1.029 1.071 1.029s1.071-.463 1.071-1.029v-6.629h6.695c.566 0 1.029-.506 1.029-1.071s-.463-1.071-1.029-1.071z"></path></svg>
 			<span class="moderncart-sr-only" aria-hidden="true">+</span>
 		</button>

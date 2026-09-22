@@ -49,6 +49,7 @@ class Admin_Menu {
 		add_action( 'wp_ajax_moderncart_fetch_whats_new', [ $this, 'fetch_whats_new' ] );
 
 		add_action( 'wp_ajax_moderncart_complete_onboarding', [ $this, 'complete_onboarding' ] );
+		add_action( 'wp_ajax_moderncart_install_onboarding_plugin', [ $this, 'install_onboarding_plugin' ] );
 	}
 
 	/**
@@ -62,7 +63,12 @@ class Admin_Menu {
 			'woocommerce',
 			esc_html__( 'Settings - Modern Cart Woo', 'modern-cart' ),
 			esc_html__( 'Modern Cart', 'modern-cart' ),
-			'manage_woocommerce',
+			// Matches the floor every capability check behind this screen shares: all
+			// four AJAX handlers and all seven abilities require manage_options, and the
+			// plugin installer requires activate_plugins / install_plugins on top of it.
+			// Registering the page with a lower capability only showed shop managers
+			// controls that wp_die() on save.
+			'manage_options',
 			'moderncart_settings',
 			[ $this, 'render' ],
 			57
@@ -123,15 +129,23 @@ class Admin_Menu {
 					MODERNCART_FLOATING_SETTINGS   => $this->helper->get_option( MODERNCART_FLOATING_SETTINGS ),
 					MODERNCART_APPEARANCE_SETTINGS => $this->helper->get_option( MODERNCART_APPEARANCE_SETTINGS ),
 					'onboarding'                   => [
-						'inProgress' => $is_onboarding,
-						'ajaxUrl'    => add_query_arg(
+						'inProgress'     => $is_onboarding,
+						'ajaxUrl'        => add_query_arg(
 							[
 								'action' => 'moderncart_complete_onboarding',
 								'nonce'  => wp_create_nonce( 'moderncart_onboarding_nonce' ),
 							],
 							admin_url( 'admin-ajax.php' )
 						),
-						'defaults'   => $this->get_onboarding_defaults(),
+						'installUrl'     => add_query_arg(
+							[
+								'action' => 'moderncart_install_onboarding_plugin',
+								'nonce'  => wp_create_nonce( 'moderncart_onboarding_nonce' ),
+							],
+							admin_url( 'admin-ajax.php' )
+						),
+						'defaults'       => $this->get_onboarding_defaults(),
+						'plugins_status' => $this->get_recommended_plugins_status(),
 					],
 					'whats_new_rss_feed'           => $this->get_whats_new_rss_feeds_data(),
 					'theme_colors'                 => Helper::get_compatible_colors(),
@@ -144,10 +158,11 @@ class Admin_Menu {
 					'versionBadgeInfo'             => apply_filters(
 						'moderncart_admin_version_badge_info',
 						[
-							'label' => 'Free',
-							'title' => MODERNCART_VER,
+							'label' => 'V ' . MODERNCART_VER,
+							'title' => 'Core',
 						]
 					),
+					'proVersionBadgeInfo'          => apply_filters( 'moderncart_admin_pro_version_badge_info', null ),
 				]
 			)
 		);
@@ -389,25 +404,26 @@ class Admin_Menu {
 	 * Complete onboarding process.
 	 */
 	public function complete_onboarding(): void {
+		// Every refusal below carries an HTTP status. wp_send_json_error()
+		// defaults to 200, which tells a client the request succeeded and left
+		// the wizard announcing that settings were saved when nothing was.
 		if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'moderncart_onboarding_nonce' ) ) {
 			// Verify the nonce, if it fails, return an error.
-			wp_send_json_error( [ 'message' => esc_html__( 'Nonce verification failed.', 'modern-cart' ) ] );
+			wp_send_json_error( [ 'message' => esc_html__( 'Nonce verification failed.', 'modern-cart' ) ], 403 );
 		}
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'modern-cart' ) );
+			wp_send_json_error( [ 'message' => esc_html__( 'You do not have sufficient permissions to complete onboarding.', 'modern-cart' ) ], 403 );
 		}
 
 		$raw_input       = file_get_contents( 'php://input' ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsRemoteFile
 		$onboarding_data = is_string( $raw_input ) ? json_decode( $raw_input, true ) : null;
 
 		if ( empty( $onboarding_data ) || ! is_array( $onboarding_data ) ) {
-			wp_send_json_error( [ 'message' => esc_html__( 'Invalid data. Onboarding data cannot be empty', 'modern-cart' ) ] );
+			wp_send_json_error( [ 'message' => esc_html__( 'Invalid data. Onboarding data cannot be empty', 'modern-cart' ) ], 400 );
 		}
 
 		$mapped_data = $this->helper->get_defaults();
-
-		$installable_plugin_slugs = [];
 
 		$user_details_data = [];
 
@@ -428,7 +444,11 @@ class Admin_Menu {
 				continue;
 			}
 
-			if ( isset( $data['hasSkipped'] ) ) {
+			// Tested the same way the analytics loop above tests it. These two
+			// disagreed: one read the value, the other only the key, so a
+			// hasSkipped of false counted as answered for analytics and as
+			// skipped for saving, and the step's answers were dropped.
+			if ( ! empty( $data['hasSkipped'] ) ) {
 				continue;
 			}
 
@@ -446,13 +466,6 @@ class Admin_Menu {
 				if ( 2 === $index && is_scalar( $value ) ) {
 					$user_details_data[ sanitize_key( $key ) ] = sanitize_text_field( wp_unslash( (string) $value ) );
 				}
-
-				if ( 3 === $index && (bool) $value ) {
-					$allowed_slugs = array_keys( $this->get_onboarding_defaults()[3] ?? [] );
-					if ( in_array( $key, $allowed_slugs, true ) ) {
-						$installable_plugin_slugs[] = $key;
-					}
-				}
 			}
 		}
 
@@ -469,8 +482,6 @@ class Admin_Menu {
 			);
 		}
 
-		Helper::install_wordpress_plugins( $installable_plugin_slugs );
-
 		if ( ! empty( $mapped_data ) ) {
 			foreach ( $mapped_data as $option => $setting_data ) {
 				$encoded_data = wp_json_encode( $setting_data );
@@ -483,6 +494,100 @@ class Admin_Menu {
 		update_option( 'moderncart_is_onboarding_complete', 'yes' );
 
 		wp_send_json_success();
+	}
+
+	/**
+	 * Install one recommended plugin.
+	 *
+	 * The wizard calls this once per plugin the user ticked. A single request
+	 * carrying all four downloads can outlast max_execution_time, and a timeout
+	 * there leaves plugins half installed with onboarding never marked complete
+	 * — one plugin per request keeps every call bounded and each failure its
+	 * own, recoverable event.
+	 *
+	 * @since x.x.x
+	 * @return void
+	 */
+	public function install_onboarding_plugin(): void {
+		if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'moderncart_onboarding_nonce' ) ) {
+			wp_send_json_error( [ 'message' => esc_html__( 'Nonce verification failed.', 'modern-cart' ) ], 403 );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => esc_html__( 'You do not have sufficient permissions to access this page.', 'modern-cart' ) ], 403 );
+		}
+
+		$plugin_slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+
+		if ( '' === $plugin_slug ) {
+			wp_send_json_error( [ 'message' => esc_html__( 'No plugin was requested.', 'modern-cart' ) ], 400 );
+		}
+
+		// manage_options is the screen's gate, not permission to write files.
+		// WordPress maps install_plugins to do_not_allow under DISALLOW_FILE_MODS
+		// and for every multisite site administrator, so without this the wizard
+		// would install plugins for users core refuses on its own screens. Both
+		// capabilities are demanded for either outcome: the endpoint downloads
+		// and activates, and splitting them by what this particular plugin needs
+		// buys a narrow case at the cost of a security gate that reads the
+		// display-status map.
+		if ( ! current_user_can( 'activate_plugins' ) || ! current_user_can( 'install_plugins' ) ) {
+			wp_send_json_error(
+				[
+					'message' => esc_html__( 'You do not have permission to install or activate plugins on this site.', 'modern-cart' ),
+					'slug'    => $plugin_slug,
+				],
+				403
+			);
+		}
+
+		// The helper owns the allow-list, so an unrecognised slug comes back as
+		// failed rather than being downloaded.
+		$failed_slugs = Helper::install_wordpress_plugins( [ $plugin_slug ] );
+		$installed    = empty( $failed_slugs );
+
+		$this->record_plugin_install_result( $plugin_slug, $installed );
+
+		wp_send_json_success(
+			[
+				'slug'      => $plugin_slug,
+				'installed' => $installed,
+			]
+		);
+	}
+
+	/**
+	 * Remember which recommended plugins failed to install.
+	 *
+	 * The wizard's own record of a failure is a row label that unmounts with
+	 * the step, so nothing survived to tell anyone afterwards which plugins the
+	 * user asked for and did not get. This outlives the request, which is what
+	 * lets analytics report it and support ask about it.
+	 *
+	 * @since x.x.x
+	 * @param string $plugin_slug Plugin slug that was attempted.
+	 * @param bool   $installed   Whether it ended up installed and active.
+	 * @return void
+	 */
+	private function record_plugin_install_result( $plugin_slug, $installed ): void {
+		$stored = get_option( 'mcw_onboarding_failed_plugins', '' );
+		$stored = is_string( $stored ) ? $stored : '';
+		$failed = '' === $stored ? [] : explode( ',', $stored );
+
+		// A retry that succeeds has to clear the earlier failure, or the list
+		// keeps reporting a plugin that is now running.
+		$failed = array_values( array_diff( $failed, [ $plugin_slug ] ) );
+
+		if ( ! $installed ) {
+			$failed[] = $plugin_slug;
+		}
+
+		if ( empty( $failed ) ) {
+			delete_option( 'mcw_onboarding_failed_plugins' );
+			return;
+		}
+
+		update_option( 'mcw_onboarding_failed_plugins', implode( ',', $failed ), false );
 	}
 
 	/**
@@ -505,13 +610,39 @@ class Admin_Menu {
 				'optin_newsletter_updates' => true,
 				'optin_usage_tracking'     => false,
 			],
-			3 => [
-				'cartflows'                     => true,
-				'woo-cart-abandonment-recovery' => true,
-				'sureforms'                     => true,
-				'surerank'                      => true,
-			],
+			// Sourced from the installer's own allow-list so the two cannot
+			// drift: every recommended plugin starts ticked.
+			3 => array_fill_keys( Helper::get_recommended_plugin_slugs(), true ),
 		];
+	}
+
+	/**
+	 * Get install/active status for the recommended onboarding plugins.
+	 *
+	 * @return array<string, string> Map of plugin slug to 'active', 'inactive', or 'not-installed'.
+	 */
+	private function get_recommended_plugins_status() {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$installed_plugins = get_plugins();
+		$statuses          = [];
+
+		foreach ( array_keys( $this->get_onboarding_defaults()[3] ?? [] ) as $slug ) {
+			$status = 'not-installed';
+
+			foreach ( $installed_plugins as $plugin_file => $plugin_data ) {
+				if ( 0 === strpos( $plugin_file, $slug . '/' ) ) {
+					$status = is_plugin_active( $plugin_file ) ? 'active' : 'inactive';
+					break;
+				}
+			}
+
+			$statuses[ $slug ] = $status;
+		}
+
+		return $statuses;
 	}
 
 	/**

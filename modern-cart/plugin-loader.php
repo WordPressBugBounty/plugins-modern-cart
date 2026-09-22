@@ -44,6 +44,7 @@ class Plugin_Loader {
 
 		register_activation_hook( __DIR__ . '/modern-cart.php', [ $this, 'activate' ] );
 		add_action( 'plugins_loaded', [ $this, 'load_classes' ] );
+		add_action( 'init', [ $this, 'load_textdomain' ], 10 );
 		add_action( 'init', [ $this, 'save_version_info' ] );
 		add_action( 'init', [ $this, 'register_bsf_analytics_entity' ], 20 );
 		add_action( 'admin_init', [ $this, 'redirect_to_onboarding' ] );
@@ -238,7 +239,6 @@ class Plugin_Loader {
 	 * @since 0.0.1
 	 */
 	public function load_classes(): void {
-		$this->load_textdomain();
 		$this->load_bsf_analytics_loader();
 
 		if ( ! class_exists( 'woocommerce' ) ) {

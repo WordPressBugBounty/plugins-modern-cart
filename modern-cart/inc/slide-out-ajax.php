@@ -54,6 +54,8 @@ class Slide_Out_Ajax extends Slide_Out {
 			wp_die();
 		}
 
+		$this->bail_if_cart_unavailable();
+
 		if ( empty( $_POST['productData'] ) ) {
 			wp_send_json_error( [ 'message' => esc_html__( 'Product Data missing', 'modern-cart' ) ] );
 		}
@@ -62,7 +64,10 @@ class Slide_Out_Ajax extends Slide_Out {
 		$form_entries = [];
 		if ( ! empty( $_POST['formEntries'] ) && is_array( $_POST['formEntries'] ) ) {
 			foreach ( $_POST['formEntries'] as $key => $value ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below per field.
-				$sanitized_key = sanitize_title( wp_unslash( $key ) );
+				// Preserve the original field key (case, underscores, hyphens) so third-party
+				// plugins find their data. `sanitize_title` would lowercase and strip/encode
+				// characters, mangling keys like `Engraving_Text` or bracketed add-on keys.
+				$sanitized_key = sanitize_text_field( wp_unslash( (string) $key ) );
 
 				if ( is_array( $value ) ) {
 					$form_entries[ $sanitized_key ] = array_map(
@@ -134,9 +139,29 @@ class Slide_Out_Ajax extends Slide_Out {
 					$quantity = max( 1, absint( $form_entries['quantity'] ) );
 				}
 
-				// Merge form entries into $_POST so third-party plugins can read their custom fields.
+				/*
+				 * The JS sends the native product-form fields as real top-level POST keys
+				 * (mirroring a standard form submit), so add-ons that read via
+				 * filter_input( INPUT_POST, ... ) during `woocommerce_add_cart_item_data`
+				 * already see their data. Additionally expose the parsed form entries via
+				 * $_POST / $_REQUEST so add-ons that read the superglobals directly are
+				 * covered too.
+				 *
+				 * Security: this is a nopriv endpoint, so $form_entries / $product are
+				 * fully attacker-controlled. Two safeguards prevent superglobal pollution
+				 * for any hook that runs later inside add_to_cart():
+				 *   1. Reserved request keys (nonce/action/referer/etc.) are stripped, so
+				 *      they can never be injected or overwritten via formEntries.
+				 *   2. The real $_POST / $_REQUEST are merged LAST, so genuine request
+				 *      values always win — the form entries only fill in keys that are
+				 *      not already present.
+				 */
 				if ( ! empty( $form_entries ) ) {
-					$_POST = array_merge( $product, $form_entries ); //phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+					$reserved_keys = [ 'moderncart_nonce', 'action', 'productData', 'formEntries', '_wpnonce', '_ajax_nonce', '_wp_http_referer', 'security', 'nonce' ];
+					$safe_entries  = array_diff_key( array_merge( $product, $form_entries ), array_flip( $reserved_keys ) );
+
+					$_POST    = array_merge( $safe_entries, $_POST ); //phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+					$_REQUEST = array_merge( $safe_entries, $_REQUEST ); //phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
 				}
 
 				$message      = '';
@@ -161,12 +186,13 @@ class Slide_Out_Ajax extends Slide_Out {
 		$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $message ) . '">' . esc_html( $message ) . '</div>';
 
 		$data = [
-			'classes'    => $this->get_slide_out_classes(),
-			'attributes' => [
+			'classes'      => $this->get_slide_out_classes(),
+			'attributes'   => [
 				'tabindex' => '-1',
 				'role'     => 'dialog',
 			],
-			'notice'     => $notice,
+			'notice'       => $notice,
+			'message_type' => $message_type,
 		];
 
 		ob_start();
@@ -196,6 +222,8 @@ class Slide_Out_Ajax extends Slide_Out {
 		if ( ! isset( $_POST['moderncart_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['moderncart_nonce'] ) ), 'moderncart_ajax_nonce' ) ) {
 			wp_die();
 		}
+
+		$this->bail_if_cart_unavailable();
 
 		$coupon_code  = ( isset( $_POST['coupon'] ) ? wc_format_coupon_code( sanitize_text_field( wp_unslash( $_POST['coupon'] ) ) ) : false );
 		$message_type = '';
@@ -262,13 +290,16 @@ class Slide_Out_Ajax extends Slide_Out {
 		$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $message ) . '">' . esc_html( $message ) . '</div>';
 
 		$data = [
-			'classes'      => $this->get_slide_out_classes(),
-			'attributes'   => [
+			'classes'             => $this->get_slide_out_classes(),
+			'attributes'          => [
 				'tabindex' => '-1',
 				'role'     => 'dialog',
 			],
-			'notice'       => $notice,
-			'message_type' => $message_type,
+			'notice'              => $notice,
+			// Only a success toasts at the top of the panel; coupon errors are rendered
+			// inline by the coupon form, which reads `coupon_message_type`.
+			'message_type'        => 'success' === $message_type ? $message_type : '',
+			'coupon_message_type' => $message_type,
 		];
 
 		ob_start();
@@ -294,6 +325,8 @@ class Slide_Out_Ajax extends Slide_Out {
 			wp_die();
 		}
 
+		$this->bail_if_cart_unavailable();
+
 		$coupon = ( isset( $_POST['coupon'] ) ? wc_format_coupon_code( sanitize_text_field( wp_unslash( $_POST['coupon'] ) ) ) : false );
 
 		if ( empty( $coupon ) ) {
@@ -313,13 +346,16 @@ class Slide_Out_Ajax extends Slide_Out {
 		$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $message ) . '">' . esc_html( $message ) . '</div>';
 
 		$data = [
-			'classes'      => $this->get_slide_out_classes(),
-			'attributes'   => [
+			'classes'             => $this->get_slide_out_classes(),
+			'attributes'          => [
 				'tabindex' => '-1',
 				'role'     => 'dialog',
 			],
-			'notice'       => $notice,
-			'message_type' => $message_type,
+			'notice'              => $notice,
+			// Only a success toasts at the top of the panel; coupon errors are rendered
+			// inline by the coupon form, which reads `coupon_message_type`.
+			'message_type'        => 'success' === $message_type ? $message_type : '',
+			'coupon_message_type' => $message_type,
 		];
 
 		ob_start();
@@ -343,6 +379,8 @@ class Slide_Out_Ajax extends Slide_Out {
 		if ( ! isset( $_POST['moderncart_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['moderncart_nonce'] ) ), 'moderncart_ajax_nonce' ) ) {
 			wp_die();
 		}
+
+		$this->bail_if_cart_unavailable();
 
 		$cart_key = ( isset( $_POST['cart_key'] ) ? sanitize_text_field( wp_unslash( $_POST['cart_key'] ) ) : '' );
 		$quantity = ( isset( $_POST['quantity'] ) ? sanitize_text_field( wp_unslash( $_POST['quantity'] ) ) : '' );
@@ -427,13 +465,14 @@ class Slide_Out_Ajax extends Slide_Out {
 		$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $message ) . '">' . esc_html( $message ) . '</div>';
 
 		$data = [
-			'classes'    => $this->get_slide_out_classes(),
-			'attributes' => [
+			'classes'      => $this->get_slide_out_classes(),
+			'attributes'   => [
 				'tabindex' => '-1',
 				'role'     => 'dialog',
 			],
-			'notice'     => $notice,
-			'action'     => $action, // Not used, added for PHPInsights.
+			'notice'       => $notice,
+			'message_type' => $message_type,
+			'action'       => $action, // Not used, added for PHPInsights.
 		];
 
 		ob_start();
@@ -461,22 +500,26 @@ class Slide_Out_Ajax extends Slide_Out {
 			wp_die();
 		}
 
+		$this->bail_if_cart_unavailable();
+
 		$notice_action = ( ! empty( $_POST['notice_action'] ) ? rest_sanitize_boolean( sanitize_text_field( wp_unslash( $_POST['notice_action'] ) ) ) : false );
 		$notice        = '';
+		$message_type  = '';
 
 		if ( $notice_action ) {
-			$type   = 'success';
-			$notice = esc_html__( 'Cart updated successfully!', 'modern-cart' );
-			$notice = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $type ) . '" data-type="' . esc_attr( $type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $notice ) . '">' . esc_html( $notice ) . '</div>';
+			$message_type = 'success';
+			$notice       = esc_html__( 'Cart updated successfully!', 'modern-cart' );
+			$notice       = '<div class="moderncart-notification moderncart-has-shadow moderncart-is-light moderncart-is-' . esc_attr( $message_type ) . '" data-type="' . esc_attr( $message_type ) . '" role="status" aria-live="assertive" aria-atomic="true" aria-label="' . esc_attr( $notice ) . '">' . esc_html( $notice ) . '</div>';
 		}
 
 		$data = [
-			'classes'    => $this->get_slide_out_classes(),
-			'attributes' => [
+			'classes'      => $this->get_slide_out_classes(),
+			'attributes'   => [
 				'tabindex' => '-1',
 				'role'     => 'dialog',
 			],
-			'notice'     => $notice,
+			'notice'       => $notice,
+			'message_type' => $message_type,
 		];
 
 		ob_start();
@@ -502,6 +545,8 @@ class Slide_Out_Ajax extends Slide_Out {
 		if ( ! isset( $_POST['moderncart_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['moderncart_nonce'] ) ), 'moderncart_ajax_nonce' ) ) {
 			wp_die();
 		}
+
+		$this->bail_if_cart_unavailable();
 
 		$cart_item_key  = ( ! empty( $_POST['cart_key'] ) ? sanitize_text_field( wp_unslash( $_POST['cart_key'] ) ) : null );
 		$cart_item      = WC()->cart->get_cart_item( Helper::convert_to_string( $cart_item_key ) );

@@ -98,7 +98,12 @@ class Register_Abilities {
 		 * to register additional abilities.
 		 *
 		 * Each entry must be an array with:
-		 *   'file'  => (string) Path to the ability class file, relative to the abilities directory.
+		 *   'file'  => (string) Optional. Path to the ability class file. An absolute path
+		 *                       is used as-is; a relative one resolves against this
+		 *                       directory. Omit it when the class is autoloadable — note
+		 *                       that this plugin's autoloader only handles the ModernCart
+		 *                       namespace, so an extension must either pass 'file' or
+		 *                       register its own.
 		 *   'class' => (string) Fully-qualified class name of the ability.
 		 *
 		 * Example (in modern-cart-woo):
@@ -146,9 +151,33 @@ class Register_Abilities {
 				continue;
 			}
 
+			// Load the declared file when the class is not already autoloadable. Only
+			// reached for a class in a trusted namespace, and only when that class is
+			// still undefined, so this cannot be used to include an arbitrary file.
+			if ( ! class_exists( $class ) && ! empty( $ability_data['file'] ) && is_string( $ability_data['file'] ) ) {
+				$ability_file = path_is_absolute( $ability_data['file'] )
+					? $ability_data['file']
+					: __DIR__ . '/' . ltrim( $ability_data['file'], '/' );
+
+				if ( is_readable( $ability_file ) ) {
+					require_once $ability_file;
+				}
+			}
+
+			if ( ! class_exists( $class ) ) {
+				continue;
+			}
+
 			$ability = new $class();
 
 			if ( ! ( $ability instanceof Abstract_Ability ) ) {
+				continue;
+			}
+
+			// Normalize the ID to a lowercase, non-falsy string as required by wp_register_ability().
+			$ability_id = strtolower( (string) $ability->get_id() );
+
+			if ( ! $ability_id ) {
 				continue;
 			}
 
@@ -170,7 +199,7 @@ class Register_Abilities {
 				),
 			);
 
-			wp_register_ability( $ability->get_id(), $ability_args );
+			wp_register_ability( $ability_id, $ability_args );
 		}
 	}
 }

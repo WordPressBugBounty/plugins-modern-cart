@@ -150,7 +150,7 @@ class Slide_Out extends Cart {
 	public function get_recommendations() {
 		$recommendation_type     = $this->get_option( 'recommendation_types', MODERNCART_SETTINGS, true );
 		$recommendation_fallback = 'random_products';
-		$cart                    = WC()->cart->get_cart();
+		$cart                    = Helper::is_cart_available() ? WC()->cart->get_cart() : [];
 		$products                = [];
 		$current_cart_item_ids   = [];
 		$product_ids             = [];
@@ -290,7 +290,8 @@ class Slide_Out extends Cart {
 	 * @return void
 	 */
 	public function render_coupon_removal(): void {
-		$coupons = WC()->cart->get_applied_coupons();
+		// Hooked to a public action, so it can be fired outside a page render.
+		$coupons = Helper::is_cart_available() ? WC()->cart->get_applied_coupons() : [];
 		?>
 		<div class="moderncart-coupon-remove" role="region" aria-label="<?php esc_attr_e( 'Applied Coupons', 'modern-cart' ); ?>">
 			<?php
@@ -303,7 +304,7 @@ class Slide_Out extends Cart {
 					$code        = $coupon->get_code();
 					$coupon_data = $coupon->get_data();
 
-					if ( empty( WC()->cart->get_cart() ) ) {
+					if ( Helper::is_cart_empty() ) {
 						WC()->cart->remove_coupon( $code );
 						continue;
 					}
@@ -348,7 +349,7 @@ class Slide_Out extends Cart {
 	public function render_coupon_form( $args ): void {
 		$enable_coupon = $this->get_option( 'enable_coupon_field', MODERNCART_SETTINGS, 'minimize' );
 
-		if ( 'disabled' === $enable_coupon || empty( WC()->cart->get_cart() ) ) {
+		if ( 'disabled' === $enable_coupon || Helper::is_cart_empty() ) {
 			return;
 		}
 
@@ -394,6 +395,11 @@ class Slide_Out extends Cart {
 	 * @return void
 	 */
 	public function render_totals( $args ): void {
+		// Every total below is calculated straight off the cart object.
+		if ( ! Helper::is_cart_available() ) {
+			return;
+		}
+
 		$cart         = WC()->cart->get_cart();
 		$checkout_url = apply_filters( 'moderncart_checkout_button_url', wc_get_checkout_url() );
 		$shop_url     = apply_filters( 'moderncart_empty_cart_button_url', get_permalink( wc_get_page_id( 'shop' ) ) );
@@ -474,7 +480,8 @@ class Slide_Out extends Cart {
 	 * @return void
 	 */
 	public function render_contents(): void {
-		$cart                              = WC()->cart->get_cart();
+		// Hooked to a public action, so it can be fired outside a page render.
+		$cart                              = Helper::is_cart_available() ? WC()->cart->get_cart() : [];
 		$cart_class                        = empty( $cart ) ? 'moderncart-slide-out-cart-empty' : 'moderncart-slide-out-cart-data';
 		$enabled_empty_cart_recommendation = ( empty( $cart ) && ( 'disabled' !== $this->get_option( 'empty_cart_recommendation', MODERNCART_SETTINGS, 'disabled' ) ) ) && ! empty( $this->get_empty_cart_recommendations() );
 
@@ -688,6 +695,13 @@ class Slide_Out extends Cart {
 			return;
 		}
 
+		// Nothing here is renderable without a cart, and every callback hooked to
+		// the template's actions reads from it. Bail before the markup so a null
+		// cart cannot cascade into a fatal.
+		if ( ! Helper::is_cart_available() ) {
+			return;
+		}
+
 		$modal_classes = [
 			'moderncart-plugin',
 			'moderncart-modal',
@@ -746,6 +760,11 @@ class Slide_Out extends Cart {
 	 * @return array<object>
 	 */
 	private function get_random_products( $products = [], $count = 4, $excludes = [] ) {
+		// Each candidate is matched against the cart below, so skip the query outright.
+		if ( ! Helper::is_cart_available() ) {
+			return [];
+		}
+
 		// Copy existing products to work with.
 		$recommended = $products;
 

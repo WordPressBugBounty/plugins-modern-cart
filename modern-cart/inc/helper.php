@@ -225,14 +225,33 @@ class Helper {
 	}
 
 	/**
+	 * Check whether the WooCommerce cart object is available.
+	 *
+	 * WooCommerce only initializes the cart when it considers the current
+	 * request a frontend request. On REST API and cron requests `WC()->cart`
+	 * stays null, so any call site that runs outside a normal page render must
+	 * check this before touching the cart.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @return bool
+	 */
+	public static function is_cart_available() {
+		return function_exists( 'WC' ) && WC() instanceof \WooCommerce && WC()->cart instanceof \WC_Cart;
+	}
+
+	/**
 	 * Check if cart is empty
+	 *
+	 * Treats an unavailable cart as empty so callers can render their
+	 * empty state instead of fataling.
 	 *
 	 * @since 0.0.1
 	 *
 	 * @return bool
 	 */
 	public static function is_cart_empty() {
-		if ( ! function_exists( 'WC' ) || null === WC()->cart ) {
+		if ( ! self::is_cart_available() ) {
 			return true;
 		}
 		return WC()->cart->is_empty();
@@ -809,15 +828,38 @@ class Helper {
 	}
 
 	/**
-	 * Install WordPress plugins available in WordPress repositories.
+	 * Plugin slugs the onboarding step is allowed to install.
+	 *
+	 * Deliberately not filterable: this is the boundary that keeps the
+	 * installer from fetching arbitrary packages, so nothing outside the
+	 * plugin gets to widen it.
+	 *
+	 * @since x.x.x
+	 * @return array<string> WordPress.org plugin slugs.
+	 */
+	public static function get_recommended_plugin_slugs() {
+		return [
+			'cartflows',
+			'woo-cart-abandonment-recovery',
+			'sureforms',
+			'surerank',
+		];
+	}
+
+	/**
+	 * Install and activate WordPress plugins available in WordPress repositories.
+	 *
+	 * Slugs are checked against get_recommended_plugin_slugs() here rather than
+	 * in the caller, so the guarantee travels with the code that does the
+	 * downloading and cannot be lost upstream.
 	 *
 	 * @since 1.0.5
 	 * @param array<string> $installable_plugin_slugs Array of WordPress plugins with value being plugin slugs.
-	 * @return bool True on success.
+	 * @return array<string> Slugs that could not be installed or activated. Empty when every plugin landed.
 	 */
 	public static function install_wordpress_plugins( $installable_plugin_slugs ) {
 		if ( empty( $installable_plugin_slugs ) ) {
-			return false;
+			return [];
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -826,57 +868,100 @@ class Helper {
 		require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
 
 		$installed_plugins = get_plugins();
+		$allowed_slugs     = self::get_recommended_plugin_slugs();
+		$failed_slugs      = [];
 
 		foreach ( $installable_plugin_slugs as $plugin_slug ) {
-			// Check if plugin is already installed.
-			$installed = false;
-			foreach ( $installed_plugins as $installed_plugin_path => $data ) {
+			$plugin_slug = sanitize_key( (string) $plugin_slug );
+
+			// Anything outside the recommended set is refused outright — it is
+			// reported as failed rather than dropped, so a caller passing an
+			// unexpected slug hears about it instead of assuming it installed.
+			if ( ! in_array( $plugin_slug, $allowed_slugs, true ) ) {
+				$failed_slugs[] = $plugin_slug;
+				continue;
+			}
+
+			// Find the plugin's entry file, if it is already on disk.
+			$plugin_path = '';
+			foreach ( array_keys( $installed_plugins ) as $installed_plugin_file ) {
+				// The keys are plugin file paths, but array_keys() widens them
+				// to int|string — cast so the activation helpers below keep the
+				// string they are typed for.
+				$installed_plugin_path = (string) $installed_plugin_file;
+
 				if ( strpos( $installed_plugin_path, $plugin_slug . '/' ) === 0 ) {
-					$installed = true;
+					$plugin_path = $installed_plugin_path;
 					break;
 				}
 			}
 
-			if ( ! $installed ) {
-				// Get plugin info from WordPress.org.
-				$api = plugins_api(
-					'plugin_information',
-					[
-						'slug'   => (string) $plugin_slug,
-						'fields' => [
-							'short_description' => false,
-							'sections'          => false,
-							'requires'          => false,
-							'rating'            => false,
-							'ratings'           => false,
-							'downloaded'        => false,
-							'last_updated'      => false,
-							'added'             => false,
-							'tags'              => false,
-							'compatibility'     => false,
-							'homepage'          => false,
-							'donate_link'       => false,
-						],
-					]
-				);
+			if ( '' === $plugin_path ) {
+				$plugin_path = self::install_plugin_from_repository( $plugin_slug );
+			}
 
-				if ( ! is_wp_error( $api ) && is_object( $api ) && isset( $api->download_link ) ) {
-					// Install plugin.
-					$upgrader = new \Plugin_Upgrader( new \WP_Ajax_Upgrader_Skin() );
-					$install  = $upgrader->install( $api->download_link );
+			// The download failed, so there is nothing to activate. Reporting
+			// it back is what stops the wizard claiming a plugin is ready.
+			if ( '' === $plugin_path ) {
+				$failed_slugs[] = $plugin_slug;
+				continue;
+			}
 
-					if ( ! is_wp_error( $install ) ) {
-						// Activate plugin.
-						$plugin_path = $upgrader->plugin_info();
-						if ( $plugin_path ) {
-							activate_plugin( $plugin_path );
-						}
-					}
-				}
+			// Activate whether it was just downloaded or was already sitting
+			// there deactivated. Installing without this step is what made a
+			// ticked but inactive plugin look like nothing had happened.
+			if ( ! is_plugin_active( $plugin_path ) && is_wp_error( activate_plugin( $plugin_path ) ) ) {
+				$failed_slugs[] = $plugin_slug;
 			}
 		}
 
-		return true;
+		return $failed_slugs;
+	}
+
+	/**
+	 * Download and unpack a plugin from the WordPress.org repository.
+	 *
+	 * Does not activate it — the caller owns that, so a freshly installed and
+	 * an already installed plugin follow the same activation path.
+	 *
+	 * @since x.x.x
+	 * @param string $plugin_slug WordPress.org plugin slug.
+	 * @return string Plugin entry file relative to the plugins directory, or '' on failure.
+	 */
+	private static function install_plugin_from_repository( $plugin_slug ) {
+		$api = plugins_api(
+			'plugin_information',
+			[
+				'slug'   => (string) $plugin_slug,
+				'fields' => [
+					'short_description' => false,
+					'sections'          => false,
+					'requires'          => false,
+					'rating'            => false,
+					'ratings'           => false,
+					'downloaded'        => false,
+					'last_updated'      => false,
+					'added'             => false,
+					'tags'              => false,
+					'compatibility'     => false,
+					'homepage'          => false,
+					'donate_link'       => false,
+				],
+			]
+		);
+
+		if ( is_wp_error( $api ) || ! is_object( $api ) || ! isset( $api->download_link ) ) {
+			return '';
+		}
+
+		$upgrader = new \Plugin_Upgrader( new \WP_Ajax_Upgrader_Skin() );
+		$install  = $upgrader->install( $api->download_link );
+
+		if ( is_wp_error( $install ) || false === $install ) {
+			return '';
+		}
+
+		return (string) $upgrader->plugin_info();
 	}
 
 	/**

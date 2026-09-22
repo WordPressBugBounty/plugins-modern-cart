@@ -48,7 +48,12 @@
 
 .moderncart-5-star .astra-review-notice.button-primary {
 	background-color: #ee5a2f;
-	border: unset;
+	border: 1px solid transparent;
+	min-height: 0;
+	line-height: 20px;
+	padding: 7px 12px;
+	font-size: 12px;
+	box-sizing: border-box;
 }
 
 .moderncart-5-star .astra-review-notice {
@@ -57,12 +62,21 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	padding: 4px 10px;
+	padding: 7px 12px;
 	border-radius: 6px;
+	text-decoration: none;
+	line-height: 20px;
 }
 
-.moderncart-5-star .astra-review-notice .dashicons-calendar {
-	margin-top: -2px;
+.moderncart-5-star .astra-review-notice .dashicons {
+	-js-display: inline-flex;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	font-size: 16px;
+	line-height: 1;
 }
 
 .moderncart-5-star .astra-review-notice:last-child {
@@ -79,4 +93,21 @@
 
 .moderncart-5-star .astra-review-notice-container .dashicons::before {
 	vertical-align: middle;
+}
+
+/* Keep the focus/active ring on-brand instead of the default WordPress blue. */
+.moderncart-5-star .astra-review-notice.button-primary:focus,
+.moderncart-5-star .astra-review-notice.button-primary.focus,
+.moderncart-5-star .astra-review-notice.button-primary:active {
+	background-color: #ee5a2f;
+	border-color: #ee5a2f;
+	color: #fff;
+	box-shadow: 0 0 0 1px #fff, 0 0 0 3px #ee5a2f;
+	outline: none;
+}
+
+.moderncart-5-star .astra-review-notice:not( .button-primary ):focus,
+.moderncart-5-star .astra-review-notice:not( .button-primary ):active {
+	box-shadow: 0 0 0 2px rgba( 238, 90, 47, 0.35 );
+	outline: none;
 }

@@ -71,7 +71,6 @@ The theme style is validated against the options defined in `Settings_Fields::ge
 | `style1` | `cart/cart-totals-style1.php` |
 | `style2` | `cart/cart-totals-style2.php` |
 
-A `cart/cart-totals-simple.php` template is also available for minimal total display.
 
 ### Drawer Classes
 

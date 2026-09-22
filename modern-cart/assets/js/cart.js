@@ -17,10 +17,18 @@
 		init() {
 			// Handle browser back/forward navigation to refresh cart state.
 			window.addEventListener( 'pageshow', function ( e ) {
+				// `pageshow` fires on every load, not just back/forward
+				// navigation. Only a bfcache restore can show stale cart
+				// markup — on a normal load the cart was just rendered
+				// server-side in wp_footer, so refreshing is redundant.
+				if ( ! e.persisted ) {
+					return;
+				}
+
 				ModernCartFrontendScripts.refreshSlideOutFloating(
 					e,
 					false,
-					true
+					false
 				);
 			} );
 
@@ -284,6 +292,10 @@
 					'click keydown',
 					'.single_add_to_cart_button',
 					function ( e ) {
+						// CartFlows' Buy Now button copies the add-to-cart classes for styling only.
+						if ( $( this ).hasClass( 'wcf-mc-buy-now' ) ) {
+							return;
+						}
 						// Return early if AJAX add to cart is disabled for single product pages.
 						if ( moderncart_ajax_object.disable_ajax_add_to_cart ) {
 							localStorage.setItem(
@@ -739,17 +751,70 @@
 			// This handles complex form fields like arrays and nested objects
 			const processedFormData = moderncartProcessFormData( formData );
 
+			// Serialize the native product-form fields (add-ons, custom fields,
+			// engraving, gift-card details, etc.) so they are sent as real top-level
+			// POST keys — exactly as a standard (non-AJAX) form submit would. This is
+			// what lets third-party plugins read their data via filter_input(INPUT_POST)
+			// or $_POST during `woocommerce_add_cart_item_data`, so AJAX-on behaves
+			// identically to AJAX-off. `formEntries`/`productData` are kept for the
+			// handler's own product parsing and backward compatibility.
+			//
+			// Two adjustments to the raw serialized fields:
+			//  1. `add-to-cart` is dropped. Leaving it in the payload makes
+			//     WooCommerce's own `add_to_cart_action()` (hooked on wp_loaded)
+			//     fire during this AJAX request and add the product a second time —
+			//     Modern Cart already adds it via `productData`. Variable/grouped
+			//     forms carry this field, so without this the item is added twice.
+			//  2. `product_id` / `variation_id` are re-added from productData. A plain
+			//     form has no `product_id` input for simple products, and the
+			//     `add-to-cart` button (the only product reference) is dropped above.
+			//     Add-ons such as WooCommerce Product Options match the product being
+			//     added via filter_input(INPUT_POST, 'product_id'|'variation_id'|
+			//     'add-to-cart') and skip processing when none match — dropping their
+			//     data. Sending the standard identifiers keeps that matching working
+			//     without re-triggering WooCommerce's native handler (which only keys
+			//     off `add-to-cart`).
+			const primaryProduct = productData[ 0 ] || {};
+			const nativeFields = $( form )
+				.serializeArray()
+				.filter( function ( field ) {
+					return ! [
+						'add-to-cart',
+						'product_id',
+						'variation_id',
+					].includes( field.name );
+				} );
+
+			if ( primaryProduct.productId ) {
+				nativeFields.push( {
+					name: 'product_id',
+					value: primaryProduct.productId,
+				} );
+			}
+			if ( primaryProduct.variationId ) {
+				nativeFields.push( {
+					name: 'variation_id',
+					value: primaryProduct.variationId,
+				} );
+			}
+
+			const nativeFormParams = $.param( nativeFields );
+
+			const requestData = $.param( {
+				action: 'moderncart_add_to_cart',
+				productData,
+				formEntries: processedFormData,
+				notice_action: true,
+				moderncart_nonce: moderncart_ajax_object.ajax_nonce,
+			} );
+
 			$.ajax( {
 				type: 'post',
 				dataType: 'json',
 				url: moderncart_ajax_object.ajax_url,
-				data: {
-					action: 'moderncart_add_to_cart',
-					productData,
-					formEntries: processedFormData,
-					notice_action: true,
-					moderncart_nonce: moderncart_ajax_object.ajax_nonce,
-				},
+				data: nativeFormParams
+					? requestData + '&' + nativeFormParams
+					: requestData,
 				beforeSend: () => {
 					ModernCartFrontendScripts.beforeAjaxAction();
 					current.addClass( 'moderncart-loading' );

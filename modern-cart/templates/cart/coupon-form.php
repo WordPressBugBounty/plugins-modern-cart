@@ -10,7 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$has_error_notice = ! empty( $data_args['message_type'] ) && ! empty( $data_args['notice'] ) && 'error' === $data_args['message_type'];
+// Keyed off a coupon-specific flag: the shared `message_type` also carries stock and
+// quantity errors from other cart actions, which must not mark the coupon field invalid.
+$has_error_notice = ! empty( $data_args['coupon_message_type'] ) && ! empty( $data_args['notice'] ) && 'error' === $data_args['coupon_message_type'];
 
 if ( $has_error_notice ) {
 	$classes[] = 'moderncart-invalid-coupon-code-error';

@@ -4,7 +4,7 @@
  * Description: The Modern Cart Starter enhances your WooCommerce cart with more features and customization options.
  * Author: CartFlows
  * Author URI: https://cartflows.com/
- * Version: 1.0.10
+ * Version: 1.1.0
  * License: GPL v2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: modern-cart
@@ -108,7 +108,7 @@ if ( ! defined( 'MODERNCART_PLUGIN_PATH' ) ) {
 	define( 'MODERNCART_PLUGIN_PATH', untrailingslashit( MODERNCART_DIR ) );
 }
 if ( ! defined( 'MODERNCART_VER' ) ) {
-	define( 'MODERNCART_VER', '1.0.10' );
+	define( 'MODERNCART_VER', '1.1.0' );
 }
 if ( ! defined( 'MODERNCART_MAIN_SETTINGS' ) ) {
 	define( 'MODERNCART_MAIN_SETTINGS', 'moderncart_setting' );

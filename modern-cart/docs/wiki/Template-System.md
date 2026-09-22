@@ -98,7 +98,6 @@ To override any template, create a file in your theme at:
 |------|-----------|-------------|
 | `cart/cart-totals-style1.php` | `Slide_Out::render_totals()` | Standard totals layout with stacked line items |
 | `cart/cart-totals-style2.php` | `Slide_Out::render_totals()` | Alternative totals layout |
-| `cart/cart-totals-simple.php` | (available for custom use) | Minimal totals display |
 
 **Available `$data` in totals templates:**
 

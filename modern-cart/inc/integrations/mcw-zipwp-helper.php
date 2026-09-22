@@ -189,8 +189,11 @@ class MCW_ZipWP_Helper {
 	 * @since 1.0.0
 	 */
 	public static function is_onboarding_complete() {
-		// Check if the onboarding completion flag is set in database.
-		return (bool) get_option( 'moderncart_onboarding_complete', false );
+		// Read the same key, and compare it the same way, as every other consumer:
+		// plugin-loader.php, admin-menu.php, the analytics library and both plugin
+		// abilities. The option holds the string 'yes' or 'no', so a boolean cast
+		// would report 'no' as complete.
+		return 'yes' === get_option( 'moderncart_is_onboarding_complete', 'no' );
 	}
 
 	/**

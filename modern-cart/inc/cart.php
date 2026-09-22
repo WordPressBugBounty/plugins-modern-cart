@@ -21,6 +21,41 @@ class Cart {
 	use Get_Instance;
 
 	/**
+	 * Memoized page-context decision for the current request.
+	 *
+	 * Static so that every subclass singleton (Scripts, Floating, Slide_Out, …)
+	 * shares one answer. Null means "not resolved yet".
+	 *
+	 * @since 1.0.11
+	 *
+	 * @var bool|null
+	 */
+	private static $is_global_enabled = null;
+
+	/**
+	 * Bail out with a JSON error when the WooCommerce cart is unavailable.
+	 *
+	 * Cart-dependent AJAX handlers must not fall through to `WC()->cart` when
+	 * WooCommerce has not initialized it. An explicit error is returned rather
+	 * than an empty success response, which would leave the frontend waiting on
+	 * markup that never arrives.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @return void
+	 */
+	protected function bail_if_cart_unavailable(): void {
+		if ( Helper::is_cart_available() ) {
+			return;
+		}
+
+		wp_send_json_error(
+			[ 'message' => esc_html__( 'Your cart is not available right now. Please reload the page and try again.', 'modern-cart' ) ],
+			503
+		);
+	}
+
+	/**
 	 * Set a notification for rendering in HTML.
 	 *
 	 * @since 0.0.1
@@ -43,10 +78,6 @@ class Cart {
 			 */
 			$value = $options[ $option ];
 			return null === $value ? $default : $value;
-		}
-
-		if ( empty( $default ) && isset( $options[ $option ] ) ) {
-			return $options[ $option ];
 		}
 
 		return $default;
@@ -90,6 +121,10 @@ class Cart {
 	/**
 	 * Set a notification for rendering in HTML.
 	 *
+	 * The `moderncart_override_is_global_enabled` filter is applied on every call
+	 * so that late-registered callbacks are still honoured. Only the page-context
+	 * decision below it is memoized.
+	 *
 	 * @since 0.0.1
 	 *
 	 * @return bool
@@ -113,15 +148,98 @@ class Cart {
 			return false;
 		}
 
-		if ( 'all' === $enabled && ! is_checkout() ) {
+		return $this->is_enabled_for_current_page( Helper::convert_to_string( $enabled ) );
+	}
+
+	/**
+	 * Whether the current page should show the cart, memoized for the request.
+	 *
+	 * Every consumer — asset enqueueing on `wp_enqueue_scripts` and markup
+	 * rendering on `wp_footer` — must get the same answer, otherwise the cart
+	 * markup is printed without the stylesheet behind it and leaks unstyled into
+	 * the page.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @param string $enabled The enable_moderncart mode.
+	 *
+	 * @return bool
+	 */
+	protected function is_enabled_for_current_page( string $enabled ): bool {
+		// Conditional tags are only meaningful once the main query has run, so the
+		// result is not cached before then.
+		$can_cache = did_action( 'wp' ) > 0;
+
+		if ( $can_cache && is_bool( self::$is_global_enabled ) ) {
+			return self::$is_global_enabled;
+		}
+
+		$result = $this->evaluate_page_context( $enabled );
+
+		if ( $can_cache ) {
+			self::$is_global_enabled = $result;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Resolve the page context for the current request.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @param string $enabled The enable_moderncart mode.
+	 *
+	 * @return bool
+	 */
+	protected function evaluate_page_context( string $enabled ): bool {
+		/*
+		 * Positive allowlist first. Every conditional here is derived from the main
+		 * query, so no third party can flip it part-way through the request. It
+		 * also keeps the cart visible on shop and product pages when a payment
+		 * gateway forces `is_checkout()` true for the whole request — WooCommerce
+		 * PayPal Payments does this while rendering its smart buttons.
+		 */
+		if ( is_shop() || is_product() || $this->is_cart_page() ) {
 			return true;
 		}
 
-		if ( is_shop() || is_product() || is_cart() ) {
-			return true;
+		// 'wc_pages' mode covers only the pages checked above.
+		if ( 'all' !== $enabled ) {
+			return false;
 		}
 
-		return false;
+		// 'all' mode covers the rest of the site, minus checkout.
+		return ! is_checkout();
+	}
+
+	/**
+	 * Whether the request is for the WooCommerce cart page.
+	 *
+	 * Deliberately not `is_cart()`: that also reports true whenever the
+	 * `WOOCOMMERCE_CART` constant is defined, which express-checkout gateways
+	 * (WooCommerce Stripe, WooPayments) do while rendering an unrelated page. This
+	 * checks page identity from the main query instead.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @return bool
+	 */
+	protected function is_cart_page(): bool {
+		$page_id = wc_get_page_id( 'cart' );
+
+		return $page_id > 0 && is_page( $page_id );
+	}
+
+	/**
+	 * Clear the memoized page-context state.
+	 *
+	 * @since 1.0.11
+	 *
+	 * @return void
+	 */
+	public static function reset_global_enabled_cache(): void {
+		self::$is_global_enabled = null;
 	}
 
 	/**
@@ -363,8 +481,17 @@ class Cart {
 
 		/**
 		 * Discount display.
+		 *
+		 * Only render the strike-through when there is a genuine price
+		 * reduction. Coupons that do not lower the amount shown — e.g. a
+		 * free-shipping coupon — leave $total_without_discount equal to
+		 * $cart_total, so showing a strike-through would duplicate the total.
 		 */
-		if ( $cart->has_discount() ) {
+		$price_decimals = wc_get_price_decimals();
+		if (
+			$cart->has_discount() &&
+			round( $total_without_discount, $price_decimals ) > round( $cart_total, $price_decimals )
+		) {
 			$value .= '<del class="moderncart-cart-discount">' .
 				wc_price( $total_without_discount ) .
 			'</del>';
@@ -523,6 +650,11 @@ class Cart {
 	 */
 	public function render_free_shipping_bar(): void {
 		if ( ! $this->get_option( 'enable_free_shipping_bar', MODERNCART_MAIN_SETTINGS, false ) ) {
+			return;
+		}
+
+		// The progress bar is derived from the cart subtotal and discounts.
+		if ( ! Helper::is_cart_available() ) {
 			return;
 		}
 

@@ -150,7 +150,17 @@ class Modern_Cart_Analytics {
 			);
 		}
 
-		// 5. pro_license_activated.
+		// 5. onboarding_plugins_failed.
+		$failed_plugins = (string) get_option( 'mcw_onboarding_failed_plugins', '' );
+		if ( '' !== $failed_plugins ) {
+			$events->track(
+				'onboarding_plugins_failed',
+				'',
+				array( 'plugins' => sanitize_text_field( $failed_plugins ) )
+			);
+		}
+
+		// 6. pro_license_activated.
 		if ( defined( 'MODERNCART_PRO_VER' ) ) {
 			if ( ! function_exists( 'is_plugin_active' ) ) {
 				include_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -160,7 +170,7 @@ class Modern_Cart_Analytics {
 			}
 		}
 
-		// 6. first_order_via_modern_cart (activation event).
+		// 7. first_order_via_modern_cart (activation event).
 		if ( get_option( 'mcw_first_order_tracked', false ) ) {
 			$install_time = (int) get_option( 'mcw_usage_installed_time', 0 );
 			$days         = 0;
@@ -174,45 +184,45 @@ class Modern_Cart_Analytics {
 			);
 		}
 
-		// 7. first_coupon_applied.
+		// 8. first_coupon_applied.
 		if ( get_option( 'mcw_first_coupon_applied', false ) ) {
 			$events->track( 'first_coupon_applied' );
 		}
 
-		// 8. first_settings_saved.
+		// 9. first_settings_saved.
 		if ( get_option( 'mcw_first_settings_saved', false ) ) {
 			$events->track( 'first_settings_saved' );
 		}
 
-		// 9. express_checkout_enabled (state-based — reads current setting).
+		// 10. express_checkout_enabled (state-based — reads current setting).
 		$main_settings = (array) get_option( MODERNCART_MAIN_SETTINGS, array() );
 		if ( ! empty( $main_settings['enable_express_checkout'] ) && true === boolval( $main_settings['enable_express_checkout'] ) ) {
 			$events->track( 'express_checkout_enabled' );
 		}
 
-		// 10. free_shipping_bar_enabled (state-based — reads current setting).
+		// 11. free_shipping_bar_enabled (state-based — reads current setting).
 		if ( ! empty( $main_settings['enable_free_shipping_bar'] ) && true === boolval( $main_settings['enable_free_shipping_bar'] ) ) {
 			$events->track( 'free_shipping_bar_enabled' );
 		}
 
-		// 11. moderncart_enabled — user has activated the cart on their site.
+		// 12. moderncart_enabled — user has activated the cart on their site.
 		if ( ! empty( $main_settings['enable_moderncart'] ) && 'disabled' !== $main_settings['enable_moderncart'] ) {
 			$events->track( 'moderncart_enabled', sanitize_text_field( $main_settings['enable_moderncart'] ) );
 		}
 
-		// 12. ajax_add_to_cart_enabled.
+		// 13. ajax_add_to_cart_enabled.
 		if ( ! empty( $main_settings['enable_ajax_add_to_cart'] ) && true === boolval( $main_settings['enable_ajax_add_to_cart'] ) ) {
 			$events->track( 'ajax_add_to_cart_enabled' );
 		}
 
-		// 13. first_cart_style_changed — user chose a non-default cart style.
+		// 14. first_cart_style_changed — user chose a non-default cart style.
 		$cart_settings = (array) get_option( MODERNCART_SETTINGS, array() );
 		$cart_style    = ! empty( $cart_settings['cart_theme_style'] ) ? $cart_settings['cart_theme_style'] : 'style1';
 		if ( 'style1' !== $cart_style ) {
 			$events->track( 'first_cart_style_changed', sanitize_text_field( $cart_style ) );
 		}
 
-		// 14. first_floating_position_changed — user moved the floating cart from the default position.
+		// 15. first_floating_position_changed — user moved the floating cart from the default position.
 		$floating_settings = (array) get_option( MODERNCART_FLOATING_SETTINGS, array() );
 		$floating_position = ! empty( $floating_settings['floating_cart_position'] ) ? $floating_settings['floating_cart_position'] : 'bottom-right';
 		if ( 'bottom-right' !== $floating_position ) {
