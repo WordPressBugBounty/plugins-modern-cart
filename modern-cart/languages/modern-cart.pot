@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Modern Cart Starter for WooCommerce 1.1.0\n"
+"Project-Id-Version: Modern Cart Starter for WooCommerce 1.1.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-cart\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-21T05:42:48+00:00\n"
+"POT-Creation-Date: 2026-10-07T07:07:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: modern-cart\n"
@@ -89,337 +89,337 @@ msgstr ""
 msgid "You do not have permission to install or activate plugins on this site."
 msgstr ""
 
+#: admin-core/inc/settings-fields.php:62
 #: admin-core/inc/settings-fields.php:63
-#: admin-core/inc/settings-fields.php:64
 msgid "General"
 msgstr ""
 
+#: admin-core/inc/settings-fields.php:68
 #: admin-core/inc/settings-fields.php:69
-#: admin-core/inc/settings-fields.php:70
 msgid "Text Label"
 msgstr ""
 
+#: admin-core/inc/settings-fields.php:74
 #: admin-core/inc/settings-fields.php:75
-#: admin-core/inc/settings-fields.php:76
 msgid "Floating Cart Icon"
 msgstr ""
 
+#: admin-core/inc/settings-fields.php:80
 #: admin-core/inc/settings-fields.php:81
-#: admin-core/inc/settings-fields.php:82
 msgid "Styling"
 msgstr ""
 
+#: admin-core/inc/settings-fields.php:91
 #: admin-core/inc/settings-fields.php:92
-#: admin-core/inc/settings-fields.php:93
 msgid "Products"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:115
+#: admin-core/inc/settings-fields.php:114
 #: inc/abilities/settings/get-available-options.php:71
 msgid "Enable Modern Cart"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:116
+#: admin-core/inc/settings-fields.php:115
 msgid "Choose where you want to enable the cart on your website."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:121
-#: admin-core/inc/settings-fields.php:159
+#: admin-core/inc/settings-fields.php:120
+#: admin-core/inc/settings-fields.php:158
 msgid "Disable"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:125
+#: admin-core/inc/settings-fields.php:124
 msgid "WooCommerce Pages"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:129
+#: admin-core/inc/settings-fields.php:128
 #: inc/abilities/settings/get-available-options.php:77
 msgid "Entire Website"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:136
+#: admin-core/inc/settings-fields.php:135
 #: inc/abilities/settings/get-available-options.php:149
 msgid "Cart Style"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:137
+#: admin-core/inc/settings-fields.php:136
 msgid "Pick a cart design that best suits your store's look and feel."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:142
+#: admin-core/inc/settings-fields.php:141
 msgid "Style 1"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:146
+#: admin-core/inc/settings-fields.php:145
 #: inc/abilities/settings/get-available-options.php:173
 msgid "Style 2"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:153
+#: admin-core/inc/settings-fields.php:152
 msgid "Display Coupon Field"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:154
+#: admin-core/inc/settings-fields.php:153
 msgid "Allow customers to enter a coupon code in the cart to apply discounts."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:163
+#: admin-core/inc/settings-fields.php:162
 msgid "Minimize"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:167
+#: admin-core/inc/settings-fields.php:166
 msgid "Expand"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:174
+#: admin-core/inc/settings-fields.php:173
 msgid "Enable AJAX Add To Cart"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:175
+#: admin-core/inc/settings-fields.php:174
 msgid "Enable or disable AJAX add to cart functionality in single product page. When disabled, the cart page will reload after adding a product."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:181
+#: admin-core/inc/settings-fields.php:180
 #: admin-core/assets/build/settings.js:11
 msgid "Enable Free Shipping Bar"
 msgstr ""
 
 #. translators: %1$s: link html start, %2$s: link html end.
-#: admin-core/inc/settings-fields.php:184
+#: admin-core/inc/settings-fields.php:183
 #, php-format
 msgid "Shows a progress bar that lets customers see how much more they need to spend to get free shipping. To enable this, turn on Free Shipping in your WooCommerce shipping settings. Need help? Check out %1$s this guide%2$s."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:193
+#: admin-core/inc/settings-fields.php:192
 msgid "Help Us Improve Your Experience"
 msgstr ""
 
 #. translators: %1$s: link html start, %2$s: link html end.
-#: admin-core/inc/settings-fields.php:196
+#: admin-core/inc/settings-fields.php:195
 #, php-format
 msgid "Allow Modern Cart and our other products to track non-sensitive usage tracking data. %1$sLearn More%2$s"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:205
+#: admin-core/inc/settings-fields.php:204
 msgid "Delete Plugin Data on Uninstall"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:206
+#: admin-core/inc/settings-fields.php:205
 msgid "Enable this to delete all Modern Cart settings and data when the plugin is deleted. Once deleted, your saved data cannot be restored."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:214
+#: admin-core/inc/settings-fields.php:213
 msgid "Main Heading"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:215
+#: admin-core/inc/settings-fields.php:214
 msgid "Set the main heading for your cart. This is the most important title and helps customers understand what this section is about."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:221
+#: admin-core/inc/settings-fields.php:220
 msgid "Coupon Field Title"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:222
+#: admin-core/inc/settings-fields.php:221
 msgid "Enter a title for the coupon field to let users know what it's for."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:224
+#: admin-core/inc/settings-fields.php:223
 msgid "Default value: Got a Discount Code?"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:229
+#: admin-core/inc/settings-fields.php:228
 msgid "Coupon Field Placeholder"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:230
+#: admin-core/inc/settings-fields.php:229
 msgid "Enter a placeholder text for the coupon field (e.g., \"Enter your coupon code\")."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:232
+#: admin-core/inc/settings-fields.php:231
 msgid "Default value: Enter discount code"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:237
+#: admin-core/inc/settings-fields.php:236
 msgid "Checkout Button Text"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:238
+#: admin-core/inc/settings-fields.php:237
 msgid "Customize the text on your checkout button to match your store's style and guide customers clearly."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:240
+#: admin-core/inc/settings-fields.php:239
 msgid "Default value: Checkout now"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:245
+#: admin-core/inc/settings-fields.php:244
 msgid "Free Shipping Bar Text"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:246
+#: admin-core/inc/settings-fields.php:245
 msgid "Use {amount} to show the remaining amount to spend."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:248
+#: admin-core/inc/settings-fields.php:247
 msgid "Default value: You're {amount} away from free shipping!"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:253
+#: admin-core/inc/settings-fields.php:252
 msgid "Free Shipping Success Message"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:254
+#: admin-core/inc/settings-fields.php:253
 msgid "Message to display when customer qualifies for free shipping."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:256
+#: admin-core/inc/settings-fields.php:255
 msgid "Default value: Awesome pick! You've unlocked free shipping."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:261
+#: admin-core/inc/settings-fields.php:260
 msgid "Discount Label"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:262
+#: admin-core/inc/settings-fields.php:261
 msgid "Enter the discount label to display the sale price. Use {percent} to show the discount percent value."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:264
+#: admin-core/inc/settings-fields.php:263
 msgid "Default value: You saved {percent}%"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:271
+#: admin-core/inc/settings-fields.php:270
 msgid "Floating Cart Button Position"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:272
+#: admin-core/inc/settings-fields.php:271
 #: admin-core/assets/build/settings.js:11
 msgid "Select where you want to position floating cart button on your website."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:277
+#: admin-core/inc/settings-fields.php:276
 #: inc/abilities/settings/get-available-options.php:243
 msgid "Bottom Left"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:281
+#: admin-core/inc/settings-fields.php:280
 msgid "Bottom Right"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:299
+#: admin-core/inc/settings-fields.php:298
 msgid "Colors"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:304
+#: admin-core/inc/settings-fields.php:303
 msgid "Primary Color"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:305
+#: admin-core/inc/settings-fields.php:304
 msgid "Select the main color for your design."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:312
+#: admin-core/inc/settings-fields.php:311
 msgid "Heading Color"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:313
+#: admin-core/inc/settings-fields.php:312
 msgid "Choose a color for the headings in the cart."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:320
+#: admin-core/inc/settings-fields.php:319
 msgid "Body Color"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:321
+#: admin-core/inc/settings-fields.php:320
 msgid "Choose a color for the text in your cart."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:329
+#: admin-core/inc/settings-fields.php:328
 msgid "Cart Header"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:334
+#: admin-core/inc/settings-fields.php:333
 #: inc/abilities/settings/get-available-options.php:258
 msgid "Cart Header Text Alignment"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:335
+#: admin-core/inc/settings-fields.php:334
 msgid "Choose how the text in your cart header is aligned."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:340
+#: admin-core/inc/settings-fields.php:339
 #: inc/abilities/settings/get-available-options.php:263
 msgid "Left"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:344
+#: admin-core/inc/settings-fields.php:343
 msgid "Center"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:348
+#: admin-core/inc/settings-fields.php:347
 #: inc/abilities/settings/get-available-options.php:271
 msgid "Right"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:355
+#: admin-core/inc/settings-fields.php:354
 msgid "Cart Header Font Size"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:356
+#: admin-core/inc/settings-fields.php:355
 msgid "Set the font size for the cart header (in pixels)."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:358
+#: admin-core/inc/settings-fields.php:357
 msgid "Default size: 22px"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:365
+#: admin-core/inc/settings-fields.php:364
 msgid "Miscellaneous"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:370
+#: admin-core/inc/settings-fields.php:369
 #: inc/abilities/settings/get-available-options.php:182
 msgid "Product Image Size"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:371
+#: admin-core/inc/settings-fields.php:370
 msgid "Choose the size of product images displayed in the cart."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:376
+#: admin-core/inc/settings-fields.php:375
 msgid "Small"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:380
+#: admin-core/inc/settings-fields.php:379
 msgid "Medium"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:384
+#: admin-core/inc/settings-fields.php:383
 #: inc/abilities/settings/get-available-options.php:195
 msgid "Large"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:391
+#: admin-core/inc/settings-fields.php:390
 msgid "Cart Item Padding"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:392
+#: admin-core/inc/settings-fields.php:391
 msgid "Set the padding around each item in the cart (in pixels)."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:394
+#: admin-core/inc/settings-fields.php:393
 msgid "Default padding: 20px"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:409
+#: admin-core/inc/settings-fields.php:408
 msgid "Animation Speed"
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:410
+#: admin-core/inc/settings-fields.php:409
 msgid "Choose how fast or slow the animation plays."
 msgstr ""
 
-#: admin-core/inc/settings-fields.php:413
+#: admin-core/inc/settings-fields.php:412
 msgid "Default speed: 300"
 msgstr ""
 

@@ -648,9 +648,10 @@
 		getGroupedProductData: () => {
 			const products = [];
 
-			// Select all quantity inputs
+			// Select all quantity inputs. Sold-individually children render a checkbox
+			// (value 1) instead of a number input, so include the ticked ones.
 			const quantityInputs = document.querySelectorAll(
-				'.woocommerce-grouped-product-list .quantity input[type="number"][name^="quantity"]'
+				'.woocommerce-grouped-product-list .quantity input[type="number"][name^="quantity"], .woocommerce-grouped-product-list input[type="checkbox"][name^="quantity"]:checked'
 			);
 
 			// Loop through the quantity inputs and retrieve the product ID and quantity
@@ -669,6 +670,27 @@
 
 			// Return an array of selected products
 			return products;
+		},
+
+		/**
+		 * Submit the product form the normal (non-AJAX) way.
+		 *
+		 * @param {HTMLFormElement}  form      The product form.
+		 * @param {HTMLElement|null} submitter The clicked add to cart button.
+		 */
+		submitCartFormNatively: ( form, submitter ) => {
+			if ( ! form ) {
+				return;
+			}
+			// requestSubmit() keeps the clicked button's name/value in the POST and runs
+			// the browser's validation, like a real click would.
+			if ( 'function' === typeof form.requestSubmit ) {
+				form.requestSubmit(
+					submitter && submitter.form === form ? submitter : undefined
+				);
+				return;
+			}
+			form.submit();
 		},
 
 		/**
@@ -733,14 +755,28 @@
 				];
 			}
 
-			if ( $( '.grouped_form' ).length ) {
-				if (
-					0 ===
-					ModernCartFrontendScripts.getGroupedProductData()?.length
-				) {
+			// Detect grouped products by their child list, not the `grouped_form` class:
+			// Product Bundles adds that class to every bundle form when Elementor Pro is
+			// active, which made bundles look like grouped products here.
+			if (
+				$cartForm.find( '.woocommerce-grouped-product-list' ).length
+			) {
+				const groupedData =
+					ModernCartFrontendScripts.getGroupedProductData();
+				if ( ! groupedData?.length ) {
+					// No child was chosen. The click's default is already prevented, so hand
+					// off to WooCommerce's native submit instead of swallowing the click — it
+					// shows its own notice. Submit the clicked button's own form: the first
+					// `form.cart` on the page may belong to a quick view or sticky bar.
+					const productForm =
+						current[ 0 ].form || current.closest( 'form' )[ 0 ];
+					ModernCartFrontendScripts.submitCartFormNatively(
+						productForm,
+						current[ 0 ]
+					);
 					return;
 				}
-				productData = ModernCartFrontendScripts.getGroupedProductData();
+				productData = groupedData;
 			}
 			// Get the cart form element to collect all form fields including add-ons and custom fields
 			const form = document.querySelector( 'form.cart' );

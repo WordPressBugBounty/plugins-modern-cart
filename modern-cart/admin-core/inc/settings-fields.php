@@ -7,7 +7,6 @@
 
 namespace ModernCart\Admin_Core\Inc;
 
-use function __;
 use ModernCart\Inc\Helper;
 
 /**

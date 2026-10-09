@@ -3,7 +3,7 @@ Contributors: brainstormforce
 Tags: woocommerce side cart, floating cart, cart drawer, popup cart, free shipping bar
 Requires at least: 5.4
 Tested up to: 7.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -219,6 +219,9 @@ Welcome to Modern Cart! [Click here](https://cartflows.com/docs-category/modern-
 5. Settings panel
 
 == Changelog ==
+
+= Version 1.1.1 - Thursday, 8th October 2026 =
+* Fix: AJAX add to cart did nothing on WooCommerce Product Bundles pages when Elementor Pro was active.
 
 = Version 1.1.0 - Tuesday, 22nd September 2026 =
 * Improvement: Performance and UX/UI improvements
